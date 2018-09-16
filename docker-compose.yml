@@ -11,7 +11,7 @@ services:
       - MYSQL_DATABASE=dev
   web:
     build: .
-    command: bundle exec rails s -p 3000 -b '0.0.0.0'
+    command: sh ./start_server.sh
     volumes:
       - .:/myapp
     ports:
