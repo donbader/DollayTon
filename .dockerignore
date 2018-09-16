@@ -1,0 +1,2 @@
+# Ignore everything in tmp except for cahce folder
+!tmp/cache
