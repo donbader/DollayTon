@@ -1,11 +1,14 @@
 version: '3'
 services:
-  db:
+  mysql:
     image: mysql:8.0.12
     ports:
-      - "3306:3306"
+      - "3333:3306"
     volumes:
       - ./tmp/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=dev
   web:
     build: .
     command: bundle exec rails s -p 3000 -b '0.0.0.0'
@@ -14,5 +17,4 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
-
+      - mysql
