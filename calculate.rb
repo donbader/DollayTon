@@ -107,14 +107,15 @@ end
 
 def place_order(pair_name, size, price, method:, type: "limit")
   puts [pair_name, TRADING_TYPE[method], type, size, price].inspect
-  order = 123
-  # order = API.place_order(pair_name, TRADING_TYPE[method], type, size, price)
+  order = nil
 
-  if order.nil?
-    puts "order not placed"
-  else
-    puts "order finished"
+  while order.nil?
+    order = API.place_order(pair_name, TRADING_TYPE[method], type, size, price)
+    sleep(0.5)
+    break unless order.nil?
+    puts "failed try again"
   end
+  puts 'success'
 end
 
 # test(result[0], result[1]["USDT -> ETH -> BTC -> USDT"], result[2]["USDT -> BTC -> ETH -> USDT"])
@@ -128,11 +129,10 @@ def test(points, r1, r2)
 end
 
 # print_current_balance
-result = calculate_triangle(1000, "USDT", "ETH", "BTC")
+result = calculate_triangle(30, "USDT", "ETH", "BTC")
 ap result
 
 
 result[:order].each do |pair_name:, size:, price:, method:, **args|
   place_order(pair_name, size, price, method: method)
-  sleep(0.1)
 end
