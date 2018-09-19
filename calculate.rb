@@ -2,7 +2,10 @@
 require "cobinhood_api"
 require "awesome_print"
 require "pry"
+require "yaml"
 
+SECRETS = YAML.load_file("secrets.yml")
+API = CobinhoodApi.new(api_key: SECRETS["API_KEY"])
 
 PAIRS = [
   "ETH-USDT",
@@ -11,11 +14,16 @@ PAIRS = [
 ]
 
 TRADING_TYPE = {
-  sell: :bids,
-  buy: :asks,
+  sell: TRADING_ORDER_SIDE::SIDE_ASK,
+  buy: TRADING_ORDER_SIDE::SIDE_BID,
 }
 
-API = CobinhoodApi.new
+def print_current_balance
+  puts "balance changes for given currency"
+  puts "ETH: #{API.get_ledger("ETH").first["balance"]}"
+  puts "BTC: #{API.get_ledger("BTC").first["balance"]}"
+  puts "USDT: #{API.get_ledger("USDT").first["balance"]}"
+end
 
 # USDT -> ETH -> BTC -> USDT
 # @return:
@@ -31,37 +39,31 @@ def calculate_triangle(fund, base, coin1, coin2)
   points = pairs.map do |pair|
     [pair, API.get_market_order_book(pair[:name], 1)]
   end
+  ap points
+
+  result1 = { order: [] }
+  result2 = { order: [] }
 
   fund1 = fund
-  fund1 = calculate_after_exchange(fund1, *points[0], method: :buy)[:exchanged_fund]
-  fund1 = calculate_after_exchange(fund1, *points[1], method: :buy)[:exchanged_fund]
-  fund1 = calculate_after_exchange(fund1, *points[2], method: :buy)[:exchanged_fund]
+  result1[:order] << calculate_after_exchange(fund1, *points[0], method: :buy)
+  fund1 = result1[:order].last[:exchanged_fund]
+  result1[:order] << calculate_after_exchange(fund1, *points[1], method: :buy)
+  fund1 = result1[:order].last[:exchanged_fund]
+  result1[:order] << calculate_after_exchange(fund1, *points[2], method: :buy)
+  fund1 = result1[:order].last[:exchanged_fund]
 
   fund2 = fund
-  fund2 = calculate_after_exchange(fund2, *points[2], method: :sell)[:exchanged_fund]
-  fund2 = calculate_after_exchange(fund2, *points[1], method: :sell)[:exchanged_fund]
-  fund2 = calculate_after_exchange(fund2, *points[0], method: :sell)[:exchanged_fund]
+  result2[:order] << calculate_after_exchange(fund2, *points[2], method: :sell)
+  fund2 = result2[:order].last[:exchanged_fund]
+  result2[:order] << calculate_after_exchange(fund2, *points[1], method: :sell)
+  fund2 = result2[:order].last[:exchanged_fund]
+  result2[:order] << calculate_after_exchange(fund2, *points[0], method: :sell)
+  fund2 = result2[:order].last[:exchanged_fund]
 
   if fund1 > fund2
-    puts fund1
-    {
-      earn: "#{fund1 - fund} #{base}",
-      order: [
-        calculate_after_exchange(fund1, *points[0], method: :buy).reject { |k, _| k == :exchanged_fund },
-        calculate_after_exchange(fund1, *points[1], method: :buy).reject { |k, _| k == :exchanged_fund },
-        calculate_after_exchange(fund1, *points[2], method: :buy).reject { |k, _| k == :exchanged_fund },
-      ],
-    }
+    result1.merge(earn: "#{fund1 - fund} #{base}")
   else
-    puts fund2
-    {
-      earn: "#{fund2 - fund} #{base}",
-      order: [
-        calculate_after_exchange(fund2, *points[2], method: :sell).reject { |k, _| k == :exchanged_fund },
-        calculate_after_exchange(fund2, *points[1], method: :sell).reject { |k, _| k == :exchanged_fund },
-        calculate_after_exchange(fund2, *points[0], method: :sell).reject { |k, _| k == :exchanged_fund },
-      ],
-    }
+    result2.merge(earn: "#{fund2 - fund} #{base}")
   end
 end
 
@@ -87,13 +89,32 @@ def calculate_after_exchange(fund, pair, api_response, method:)
   method = pair[:reversed] ? opposite_method : method
 
   operator = method == :buy ? :/ : :*
+  # price = method == :buy ? api_response[:asks][0]["price"] : api_response[:bids][0]["price"]
   price = (api_response[:asks][0]["price"] + api_response[:bids][0]["price"]).to_f / 2
+  market_price = method == :buy ? api_response[:asks][0]["price"] : api_response[:bids][0]["price"]
 
+  exchanged_fund = fund.send(operator, price)
+  size = method == :buy ? exchanged_fund : exchanged_fund / price
   {
-    exchanged_fund: fund.send(operator, price),
+    pair_name: pair[:name],
+    size: size,
+    exchanged_fund: exchanged_fund,
     price: price,
     method: method,
+    market_price: market_price,
   }
+end
+
+def place_order(pair_name, size, price, method:, type: "limit")
+  puts [pair_name, TRADING_TYPE[method], type, size, price].inspect
+  order = 123
+  # order = API.place_order(pair_name, TRADING_TYPE[method], type, size, price)
+
+  if order.nil?
+    puts "order not placed"
+  else
+    puts "order finished"
+  end
 end
 
 # test(result[0], result[1]["USDT -> ETH -> BTC -> USDT"], result[2]["USDT -> BTC -> ETH -> USDT"])
@@ -106,19 +127,12 @@ def test(points, r1, r2)
   puts "UBEU correct" if r2 == 1000 / points[4] / points[2] * points[1]
 end
 
-# calculate_triangle
-# 100.times {
-  # sleep(0.5)
-  # ap calculate_triangle("USDT", "ETH", "BTC")
-# }
+# print_current_balance
 result = calculate_triangle(1000, "USDT", "ETH", "BTC")
 ap result
 
 
-# ask ask bids -> earn
-
-# asks asks | asks
-
-# bids bids | bids
-
-# bids bids asks -> earn
+result[:order].each do |pair_name:, size:, price:, method:, **args|
+  place_order(pair_name, size, price, method: method)
+  sleep(0.1)
+end
