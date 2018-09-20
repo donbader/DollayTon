@@ -3,6 +3,7 @@ require "cobinhood_api"
 require "awesome_print"
 require "pry"
 require "yaml"
+require "bigdecimal"
 
 SECRETS = YAML.load_file("secrets.yml")
 API = CobinhoodApi.new(api_key: SECRETS["API_KEY"])
@@ -18,11 +19,10 @@ TRADING_TYPE = {
   buy: TRADING_ORDER_SIDE::SIDE_BID,
 }
 
-def print_current_balance
-  puts "balance changes for given currency"
-  puts "ETH: #{API.get_ledger("ETH").first["balance"]}"
-  puts "BTC: #{API.get_ledger("BTC").first["balance"]}"
-  puts "USDT: #{API.get_ledger("USDT").first["balance"]}"
+balances = {}
+
+def refresh_balance(coin)
+  balances[coin] = API.get_ledger(coin).first["balance"].to_d
 end
 
 # USDT -> ETH -> BTC -> USDT
@@ -90,7 +90,7 @@ def calculate_after_exchange(fund, pair, api_response, method:)
 
   operator = method == :buy ? :/ : :*
   # price = method == :buy ? api_response[:asks][0]["price"] : api_response[:bids][0]["price"]
-  price = (api_response[:asks][0]["price"] + api_response[:bids][0]["price"]).to_f / 2
+  price = (api_response[:asks][0]["price"] + api_response[:bids][0]["price"]).to_d / 2
   market_price = method == :buy ? api_response[:asks][0]["price"] : api_response[:bids][0]["price"]
 
   exchanged_fund = fund.send(operator, price)
@@ -107,11 +107,11 @@ end
 
 def place_order(pair_name, size, price, method:, type: "limit")
   puts [pair_name, TRADING_TYPE[method], type, size, price].inspect
-  order = nil
+  order = "123"
 
   while order.nil?
     order = API.place_order(pair_name, TRADING_TYPE[method], type, size, price)
-    sleep(0.5)
+    sleep(0.1)
     break unless order.nil?
     puts "failed try again"
   end
@@ -128,11 +128,18 @@ def test(points, r1, r2)
   puts "UBEU correct" if r2 == 1000 / points[4] / points[2] * points[1]
 end
 
-# print_current_balance
-result = calculate_triangle(30, "USDT", "ETH", "BTC")
-ap result
+# ==================================================================================
+# MAIN
+def main(base, coin1, coin2)
+  puts "#{base}: #{refresh_balance(base)}"
+  puts "#{coin1}: #{refresh_balance(coin1)}"
+  puts "#{coin2}: #{refresh_balance(coin2)}"
 
+  ap result = calculate_triangle(30, base, coin1, coin2)
 
-result[:order].each do |pair_name:, size:, price:, method:, **args|
-  place_order(pair_name, size, price, method: method)
+  result[:order].each do |pair_name:, size:, price:, method:, **args|
+    place_order(pair_name, size, price, method: method)
+  end
 end
+
+main("USDT", "ETH", "BTC")
