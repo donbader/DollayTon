@@ -5,11 +5,12 @@ require "pry"
 require "yaml"
 require "bigdecimal"
 require "bigdecimal/util"
+require_relative "./api"
 
 class Robot
   attr_reader :balances
-  SECRETS = YAML.load_file("secrets.yml")
-  API = CobinhoodApi.new(api_key: SECRETS["API_KEY"])
+  SECRETS = YAML.load_file("../../secrets.yml")
+  API = Api.new('Cobinhood')
 
   PAIRS = [
     "ETH-USDT",
@@ -113,11 +114,12 @@ class Robot
 
   def place_order(pair_name, size, price, method:, type: "limit")
     puts [pair_name, TRADING_TYPE[method], type, size, price].inspect
-    order = "123"
+    order = nil
 
     while order.nil?
       order = API.place_order(pair_name, TRADING_TYPE[method], type, size, price)
-      sleep(0.1)
+      sleep(0.3)
+      # order=1
       break unless order.nil?
       puts "failed try again"
     end
@@ -135,7 +137,7 @@ class Robot
   end
 
   def refresh_balances(*coins)
-    coins.each { |coin| balances[coin] = API.get_ledger(coin).first["balance"].to_f }
+    coins.each { |coin| balances[coin] = API.get_ledger(coin, "balance", 1).first.to_f }
   end
 
   def print_balances
@@ -151,12 +153,3 @@ class Robot
     end
   end
 end
-
-# ==================================================================================
-# MAIN
-def main
-  robot = Robot.new("USDT", "ETH", "BTC")
-  robot.auto_trade(30)
-end
-
-main
