@@ -51,6 +51,20 @@ module Client
       cache[dest]
     end
 
+    def place_order!(pair_name, method, price, size)
+      method = method == :buy ? :bid : :ask
+      order = nil
+
+      while order.nil?
+        puts [pair_name, method, price, size].inspect
+        order = @api.place_order(pair_name, method, "limit", size, price)
+
+        break unless order.nil?
+        puts "failed try again"
+      end
+      puts 'success'
+    end
+
     private def find_pair(source, dest)
       name = PAIRS.find { |p| p == "#{dest}-#{source}" }
       return {name: name, reversed: false} if name

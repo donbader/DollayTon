@@ -26,5 +26,9 @@ module Client
     def available_balance(coin, refresh: false)
       raise NotImplementedError
     end
+
+    def place_order!(pair_name, method, price, size)
+      raise NotImplementedError
+    end
   end
 end
