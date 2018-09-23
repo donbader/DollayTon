@@ -1,5 +1,6 @@
 module Client
   class Binance < Client::Base
+    FEE_RATE = 0.001
     PAIRS = [
       "ETHBTC",
       "ETHUSDT",
@@ -28,7 +29,7 @@ module Client
       price = cache[pair[:name]][type].first.first.to_f
 
       exchange_rate = pair[:reversed] ? price : 1.0 / price
-      exchange_rate *= 0.999 # Fees
+      exchange_rate *= (1 - FEE_RATE) # Fees
 
       {
         pair_name: pair[:name],
