@@ -16,7 +16,7 @@ module Client
       @rest_api = ::Binance::Client::REST.new(api_key: api_key)
     end
 
-    def order_book_price(source, dest, refresh: false)
+    def orderbook_price(source, dest, refresh: false)
       pair = find_pair(source, dest)
 
       if refresh || cache[pair[:name]].nil?

@@ -77,8 +77,8 @@ module TriangleArbitrage
 
     def better_order(source, dest)
       # TODO: GET Better order from different API
-      a = @cobinhood.order_book_price(source, dest)
-      b = @binance.order_book_price(source, dest)
+      a = @cobinhood.orderbook_price(source, dest)
+      b = @binance.orderbook_price(source, dest)
 
       if a[:exchange_rate] < b[:exchange_rate]
         a.merge(prvoider: "Cobinhood")
