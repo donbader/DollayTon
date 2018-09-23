@@ -1,4 +1,5 @@
 # TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").run(1000)
+DEBUG = false
 module TriangleArbitrage
   class Robot
 
@@ -10,7 +11,7 @@ module TriangleArbitrage
         result = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").run(1000)
 
         if result[:profit] < 0
-          puts "earned: #{earned}, fee: #{result[:fee]} -------negative: #{result[:profit]}"
+          puts "earned: #{earned}, -------negative: #{result[:profit]}"
         else
           earned += result[:profit]
           puts "earned: #{earned}, Time elapsed: #{Time.now - time_start}"
@@ -34,10 +35,12 @@ module TriangleArbitrage
     def run(fund)
       # FIXME: compare the price
       direction1 = calculate_triangle(fund, @base, @coin1, @coin2)
+      ap direction1.except(:orders) if DEBUG
       direction2 = calculate_triangle(fund, @base, @coin2, @coin1)
+      ap direction2.except(:orders) if DEBUG
 
-      profit1 = direction1[:exchanged_fund] - fund - direction1[:fee]
-      profit2 = direction2[:exchanged_fund] - fund - direction2[:fee]
+      profit1 = direction1[:exchanged_fund] - fund
+      profit2 = direction2[:exchanged_fund] - fund
 
       if profit1 > profit2
         direction1.merge(profit: profit1)
@@ -65,15 +68,10 @@ module TriangleArbitrage
       order = better_order(source, dest)
       result = prev_result.dup
 
-      result[:exchanged_fund] = prev_result[:exchanged_fund] / order[:exchange_rate]
+      result[:exchanged_fund] = prev_result[:exchanged_fund] * order[:exchange_rate]
       result[:orders] << order.except(:exchange_rate).merge(
         size: order[:method] == :sell ? prev_result[:exchanged_fund] : result[:exchanged_fund],
       )
-
-      result[:fee] ||= 0
-      if order[:client] == Client::Binance
-        result[:fee] += 1
-      end
 
       result
     end
@@ -81,7 +79,8 @@ module TriangleArbitrage
     def better_order(source, dest)
       # TODO: GET Better order from different API
       orders = @clients.map { |client| client.orderbook_price(source, dest).merge(client: client.class) }
-      orders.min_by { |order| order[:exchange_rate] }
+      ap orders if DEBUG
+      orders.max_by { |order| order[:exchange_rate] }
     end
   end
 end

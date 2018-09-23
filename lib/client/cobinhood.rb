@@ -33,7 +33,7 @@ module Client
 
       price = cache[pair[:name]][type].first["price"]
 
-      exchange_rate = pair[:reversed] ? 1.0 / price : price
+      exchange_rate = pair[:reversed] ? price : 1.0 / price
 
       {
         pair_name: pair[:name],
