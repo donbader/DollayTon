@@ -25,8 +25,10 @@ module TriangleArbitrage
       @coin2 = coin2
 
       # FIXME: only use cobinhood for now
-      @cobinhood = Client::Cobinhood.baimao
-      @binance = Client::Binance.corey
+      @clients = [
+        Client::Cobinhood.baimao,
+        Client::Binance.corey,
+      ]
     end
 
     def run(fund)
@@ -67,8 +69,9 @@ module TriangleArbitrage
       result[:orders] << order.except(:exchange_rate).merge(
         size: order[:method] == :sell ? prev_result[:exchanged_fund] : result[:exchanged_fund],
       )
-      if order[:prvoider] == "Binance"
-        result[:fee] ||= 0
+
+      result[:fee] ||= 0
+      if order[:client] == Client::Binance
         result[:fee] += 1
       end
 
@@ -77,14 +80,8 @@ module TriangleArbitrage
 
     def better_order(source, dest)
       # TODO: GET Better order from different API
-      a = @cobinhood.orderbook_price(source, dest)
-      b = @binance.orderbook_price(source, dest)
-
-      if a[:exchange_rate] < b[:exchange_rate]
-        a.merge(prvoider: "Cobinhood")
-      else
-        b.merge(prvoider: "Binance")
-      end
+      orders = @clients.map { |client| client.orderbook_price(source, dest).merge(client: client.class) }
+      orders.min_by { |order| order[:exchange_rate] }
     end
   end
 end
