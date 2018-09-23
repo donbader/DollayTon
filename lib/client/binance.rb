@@ -8,7 +8,7 @@ module Client
     ]
 
     def self.corey
-      api_key = YAML.load_file("secrets.yml")["BINANCE"]["API_KEY"]
+      # api_key = YAML.load_file("secrets.yml")["BINANCE"]["API_KEY"]
       api_key = nil
       new(api_key)
     end

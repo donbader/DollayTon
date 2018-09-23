@@ -32,6 +32,7 @@ module TriangleArbitrage
       @clients = [
         Client::Cobinhood.baimao,
         Client::Binance.corey,
+        Client::Max.baimao,
       ]
     end
 
