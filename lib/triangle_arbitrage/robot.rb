@@ -33,6 +33,8 @@ module TriangleArbitrage
         Client::Cobinhood.baimao,
         Client::Binance.corey,
         Client::Max.baimao,
+        Client::Okex.baimao,
+        Client::Bittrex.baimao,
       ]
     end
 
