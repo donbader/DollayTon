@@ -12,6 +12,13 @@ module Client
       ap @cache
     end
 
+    # @return:
+    # {
+    #   pair_name: e.g. "ETH-BTC",
+    #   price: price in order book,
+    #   exchange_rate: will be inversed number if different direction,
+    #   method: direction[:reversed] ? :sell : :buy,
+    # }
     def order_book_price(source, dest, refresh: false)
       raise NotImplementedError
     end

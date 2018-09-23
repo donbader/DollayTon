@@ -62,5 +62,3 @@ module Client
     end
   end
 end
-
-# Client::Cobinhood.
