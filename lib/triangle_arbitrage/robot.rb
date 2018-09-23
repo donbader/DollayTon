@@ -1,6 +1,23 @@
 # TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").run(1000)
 module TriangleArbitrage
   class Robot
+
+    def self.hi
+      time_start = Time.now
+      earned = 0
+
+      while Time.now - time_start < 3600
+        result = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").run(1000)
+
+        if result[:profit] < 0
+          puts "earned: #{earned}, fee: #{result[:fee]} -------negative: #{result[:profit]}"
+        else
+          earned += result[:profit]
+          puts "earned: #{earned}, Time elapsed: #{Time.now - time_start}"
+        end
+      end
+    end
+
     def initialize(base, coin1, coin2)
       @balances = {}
       @base = base
@@ -14,9 +31,17 @@ module TriangleArbitrage
 
     def run(fund)
       # FIXME: compare the price
-      calculate_triangle(fund, @base, @coin1, @coin2)
-      calculate_triangle(fund, @base, @coin2, @coin1)
+      direction1 = calculate_triangle(fund, @base, @coin1, @coin2)
+      direction2 = calculate_triangle(fund, @base, @coin2, @coin1)
 
+      profit1 = direction1[:exchanged_fund] - fund - direction1[:fee]
+      profit2 = direction2[:exchanged_fund] - fund - direction2[:fee]
+
+      if profit1 > profit2
+        direction1.merge(profit: profit1)
+      else
+        direction2.merge(profit: profit2)
+      end
       # @binance.print_cache
     end
 
@@ -31,7 +56,6 @@ module TriangleArbitrage
         result = calculate_after_exchange(result, coin, next_coin)
       end
 
-      ap result
       result
     end
 
@@ -43,13 +67,24 @@ module TriangleArbitrage
       result[:orders] << order.except(:exchange_rate).merge(
         size: order[:method] == :sell ? prev_result[:exchanged_fund] : result[:exchanged_fund],
       )
+      if order[:prvoider] == "Binance"
+        result[:fee] ||= 0
+        result[:fee] += 1
+      end
 
       result
     end
 
     def better_order(source, dest)
       # TODO: GET Better order from different API
-      @binance.order_book_price(source, dest)
+      a = @cobinhood.order_book_price(source, dest)
+      b = @binance.order_book_price(source, dest)
+
+      if a[:exchange_rate] < b[:exchange_rate]
+        a.merge(prvoider: "Cobinhood")
+      else
+        b.merge(prvoider: "Binance")
+      end
     end
   end
 end
