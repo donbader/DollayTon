@@ -9,6 +9,7 @@ module Client
 
     def self.corey
       api_key = YAML.load_file("secrets.yml")["BINANCE"]["API_KEY"]
+      api_key = nil
       new(api_key)
     end
 
@@ -37,6 +38,18 @@ module Client
         exchange_rate: exchange_rate,
         method: pair[:reversed] ? :sell : :buy,
       }
+    end
+
+    def place_order!(pair_name, method, price, size)
+      order =
+        if ENV["PLACE_ORDER"]
+          nil
+        else
+          puts [self.class.name, pair_name, method, price, size].inspect
+          123
+        end
+
+      order = @rest_api.create_order!(symbol: pair_name, side: method.upcase, type: "LIMIT") if order.nil?
     end
 
     private def find_pair(source, dest)

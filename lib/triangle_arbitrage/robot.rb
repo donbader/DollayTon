@@ -1,4 +1,4 @@
-# TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").run(1000)
+# TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").calculate(1000)
 DEBUG = false
 module TriangleArbitrage
   class Robot
@@ -8,9 +8,13 @@ module TriangleArbitrage
       earned = 0
 
       while Time.now - time_start < 3600
-        result = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").run(1000)
+        bot = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC")
+        result = bot.calculate(1000)
 
-        earned += result[:profit] if result[:profit] > 0
+        if result[:profit] > 0
+          bot.place_orders(result[:orders])
+          earned += result[:profit]
+        end
         ap result
         puts "earned: #{earned}, Time elapsed: #{Time.now - time_start}"
         puts "----------------------------------------------------"
@@ -30,8 +34,13 @@ module TriangleArbitrage
       ]
     end
 
-    def run(fund)
-      # FIXME: compare the price
+    def place_orders(orders)
+      orders.each do |client:, pair_name:, method:, price:, size:|
+        client.place_order!(pair_name, method, price, size)
+      end
+    end
+
+    def calculate(fund)
       direction1 = calculate_triangle(fund, @base, @coin1, @coin2)
       ap direction1.except(:orders) if DEBUG
       direction2 = calculate_triangle(fund, @base, @coin2, @coin1)
@@ -45,7 +54,6 @@ module TriangleArbitrage
       else
         direction2.merge(profit: profit2)
       end
-      # @binance.print_cache
     end
 
     def calculate_triangle(fund, *coins)
@@ -76,7 +84,7 @@ module TriangleArbitrage
 
     def better_order(source, dest)
       # TODO: GET Better order from different API
-      orders = @clients.map { |client| client.orderbook_price(source, dest).merge(client: client.class) }
+      orders = @clients.map { |client| client.orderbook_price(source, dest).merge(client: client) }
       ap orders if DEBUG
       orders.max_by { |order| order[:exchange_rate] }
     end

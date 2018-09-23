@@ -14,6 +14,7 @@ module Client
 
     def self.baimao
       api_key = YAML.load_file("secrets.yml")["COBINHOOD"]["API_KEY"]
+      api_key = nil
       new(api_key)
     end
 
@@ -53,10 +54,15 @@ module Client
 
     def place_order!(pair_name, method, price, size)
       method = method == :buy ? :bid : :ask
-      order = nil
+      order =
+        if ENV["PLACE_ORDER"]
+          nil
+        else
+          puts [self.class.name, pair_name, method, price, size].inspect
+          123
+        end
 
       while order.nil?
-        puts [pair_name, method, price, size].inspect
         order = @api.place_order(pair_name, method, "limit", size, price)
 
         break unless order.nil?

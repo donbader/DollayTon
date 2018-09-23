@@ -30,5 +30,13 @@ module Client
     def place_order!(pair_name, method, price, size)
       raise NotImplementedError
     end
+
+    def to_s
+      self.class.name
+    end
+
+    def inspect
+      "#{to_s}.instance"
+    end
   end
 end
