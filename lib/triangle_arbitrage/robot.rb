@@ -9,6 +9,7 @@ module TriangleArbitrage
 
       # FIXME: only use cobinhood for now
       @cobinhood = Client::Cobinhood.baimao
+      @binance = Client::Binance.corey
     end
 
     def run(fund)
@@ -16,7 +17,7 @@ module TriangleArbitrage
       calculate_triangle(fund, @base, @coin1, @coin2)
       calculate_triangle(fund, @base, @coin2, @coin1)
 
-      @cobinhood.print_cache
+      # @binance.print_cache
     end
 
     def calculate_triangle(fund, *coins)
@@ -48,7 +49,7 @@ module TriangleArbitrage
 
     def better_order(source, dest)
       # TODO: GET Better order from different API
-      @cobinhood.order_book_price(source, dest)
+      @binance.order_book_price(source, dest)
     end
   end
 end
