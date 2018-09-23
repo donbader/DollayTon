@@ -14,6 +14,7 @@ module Client
 
     # @return:
     # {
+    #   client: self,
     #   pair_name: e.g. "ETH-BTC",
     #   price: price in order book,
     #   exchange_rate: will be inversed number if different direction,

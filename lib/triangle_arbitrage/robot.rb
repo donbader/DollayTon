@@ -86,7 +86,7 @@ module TriangleArbitrage
 
     def better_order(source, dest)
       # TODO: GET Better order from different API
-      orders = @clients.map { |client| client.orderbook_price(source, dest).merge(client: client) }
+      orders = @clients.map { |client| client.orderbook_price(source, dest) }
       ap orders if DEBUG
       orders.max_by { |order| order[:exchange_rate] }
     end

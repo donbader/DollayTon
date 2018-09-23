@@ -33,6 +33,7 @@ module Client
       exchange_rate *= (1 - FEE_RATE) # Fees
 
       {
+        client: self,
         pair_name: pair[:name],
         price: price,
         exchange_rate: exchange_rate,

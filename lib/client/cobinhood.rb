@@ -37,6 +37,7 @@ module Client
       exchange_rate = pair[:reversed] ? price : 1.0 / price
 
       {
+        client: self,
         pair_name: pair[:name],
         price: price,
         exchange_rate: exchange_rate,
