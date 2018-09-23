@@ -1,6 +1,7 @@
 module Client
   class Okex < Client::Base
     # FIXME: hard-coded for now
+    FEE_RATE = 0.001
     PAIRS = [
       "ethusdt",
       "btcusdt",
@@ -37,6 +38,7 @@ module Client
       price = cache[pair[:name]][type].first.first
 
       exchange_rate = pair[:reversed] ? price.to_f : 1.0 / price.to_f
+      exchange_rate *= (1 - FEE_RATE) # Fees
 
       {
         client: self,
