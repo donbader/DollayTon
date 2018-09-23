@@ -28,11 +28,6 @@ class Api
   end
 
   def get_available_balance(coin)
-    @api.get_ledger(coin).first.map { |o| o["available_balance"] }
+    @api.get_ledger(coin).first["balance"]
   end
-
-  def get_available_balance(coin)
-    @api.get_ledger(coin).slice(0, limit).map { |o| o[type] }
-  end
-
 end

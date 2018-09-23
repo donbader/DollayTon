@@ -114,7 +114,7 @@ class Robot
 
   def place_order(pair_name, size, price, method:, type: "limit")
     puts [pair_name, TRADING_TYPE[method], type, size, price].inspect
-    order = nil
+    order = 123
 
     while order.nil?
       order = API.place_order(pair_name, TRADING_TYPE[method], type, size, price)
@@ -137,7 +137,7 @@ class Robot
   end
 
   def refresh_balances(*coins)
-    coins.each { |coin| balances[coin] = API.get_ledger(coin, "balance", 1).first.to_f }
+    coins.each { |coin| balances[coin] = API.get_available_balance(coin) }
   end
 
   def print_balances
