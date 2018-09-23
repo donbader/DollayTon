@@ -10,12 +10,13 @@ module TriangleArbitrage
       while Time.now - time_start < 3600
         bot = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC")
         result = bot.calculate(1000)
+        ap result
 
         if result[:profit] > 0
           bot.place_orders(result[:orders])
           earned += result[:profit]
         end
-        ap result
+
         puts "earned: #{earned}, Time elapsed: #{Time.now - time_start}"
         puts "----------------------------------------------------"
       end
