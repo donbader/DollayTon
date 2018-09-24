@@ -57,9 +57,12 @@ module TriangleArbitrage
         calculate_triangle(@base, @coin2, @coin1, refresh: false),
       ].max_by { |direction| direction[:exchanged_percentage] }
 
-      needed_fund = result[:orders].first[:size] / result[:orders].first[:exchange_rate]
+      needed_fund = result[:orders].first[:max_size] / result[:orders].first[:exchange_rate]
       invested_amount = [needed_fund, max_amount].min
       profit = invested_amount * (result[:exchanged_percentage] - 1)
+
+      result[:orders] = assign_invest_size(result[:orders], invested_amount)
+
       result.merge(
         needed_fund: "#{needed_fund} #{@base}",
         invested_amount: "#{invested_amount} #{@base}",
@@ -80,7 +83,7 @@ module TriangleArbitrage
         result[:orders] << order
       end
 
-      result[:orders] = assign_size(result[:orders])
+      result[:orders] = assign_max_size(result[:orders])
 
       result
     end
@@ -92,7 +95,7 @@ module TriangleArbitrage
       orders.max_by { |order| order[:exchange_rate] }
     end
 
-    def assign_size(orders)
+    def assign_max_size(orders)
       temp_base_values = orders.map do |order|
         if order[:method] == :buy
           order[:stock] / order[:exchange_rate]
@@ -115,10 +118,17 @@ module TriangleArbitrage
 
       orders.each_with_index.map do |order, i|
         if order[:method] == :buy
-          order.merge(size: reverted_base_values[i] * order[:exchange_rate])
+          order.merge(max_size: reverted_base_values[i] * order[:exchange_rate])
         else
-          order.merge(size: reverted_base_values[i])
+          order.merge(max_size: reverted_base_values[i])
         end
+      end
+    end
+
+    def assign_invest_size(orders, invested_amount)
+      needed_fund = orders.first[:max_size] / orders.first[:exchange_rate]
+      orders.map do |order|
+        order.merge(size: order[:max_size] * (invested_amount.to_f / needed_fund))
       end
     end
   end
