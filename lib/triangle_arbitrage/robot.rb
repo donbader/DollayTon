@@ -1,5 +1,5 @@
-# TriangleArbitrage::Robot.new("USDT", "ETH", "BTC").calculate(1000)
 DEBUG = false
+
 module TriangleArbitrage
   class Robot
 
