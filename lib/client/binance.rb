@@ -10,14 +10,15 @@ module Client
     def self.corey
       # api_key = YAML.load_file("secrets.yml")["BINANCE"]["API_KEY"]
       api_key = nil
-      new(api_key)
+      new(api_key: api_key)
     end
 
-    def initialize(api_key, secret_key = nil)
+    def initialize(api_key: nil, secret_key: nil)
       super
       @rest_api = ::Binance::Client::REST.new(api_key: api_key)
     end
 
+    # Client::Binance.new.orderbook_price("USDT", "ETH", refresh: false)
     def orderbook_price(source, dest, refresh: false)
       pair = find_pair(source, dest)
 
@@ -27,10 +28,12 @@ module Client
 
       type = pair[:reversed] ? "bids" : "asks"
 
-      price = cache[pair[:name]][type].first.first.to_f
+      price = cache[pair[:name]][type].first[0].to_f
 
       exchange_rate = pair[:reversed] ? price : 1.0 / price
       exchange_rate *= (1 - FEE_RATE) # Fees
+
+      stock = cache[pair[:name]][type].first[1].to_f
 
       {
         client: self,
@@ -38,6 +41,7 @@ module Client
         price: price,
         exchange_rate: exchange_rate,
         method: pair[:reversed] ? :sell : :buy,
+        stock: stock,
       }
     end
 
