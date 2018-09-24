@@ -16,14 +16,15 @@ module Client
       # api_key = YAML.load_file("secrets.yml")["MAX"]["API_KEY"]
       # new(api_key)
       api_key = nil
-      new(api_key)
+      new(api_key: api_key)
     end
 
-    def initialize(api_key)
+    def initialize(api_key: nil)
       super
       # @header = { api: api_key }
     end
 
+    # Client::Max.new.orderbook_price("USDT", "ETH", refresh: false)
     def orderbook_price(source, dest, refresh: false)
       pair = find_pair(source, dest)
 
@@ -43,9 +44,11 @@ module Client
 
       type = pair[:reversed] ? "bids" : "asks"
 
-      price = cache[pair[:name]][type].first["price"]
+      price = cache[pair[:name]][type].first["price"].to_f
 
       exchange_rate = pair[:reversed] ? price.to_f : 1.0 / price.to_f
+
+      stock = cache[pair[:name]][type].first["remaining_volume"].to_f
 
       {
         client: self,
@@ -53,6 +56,7 @@ module Client
         price: price,
         exchange_rate: exchange_rate,
         method: pair[:reversed] ? :sell : :buy,
+        stock: stock,
       }
     end
 
