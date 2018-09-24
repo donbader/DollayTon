@@ -29,9 +29,10 @@ module Client
       pair = find_pair(source, dest)
 
       if refresh || cache[pair[:name]].nil?
-        cache[pair[:name]] = HTTParty.get(
-          "https://api.cryptowat.ch/markets/okex/#{pair[:name].to_s}/orderbook?limit=1",
-        )["result"]
+        store_cache(
+          pair[:name],
+          HTTParty.get("https://api.cryptowat.ch/markets/okex/#{pair[:name].to_s}/orderbook?limit=1")["result"],
+        )
       end
 
       type = pair[:reversed] ? "bids" : "asks"

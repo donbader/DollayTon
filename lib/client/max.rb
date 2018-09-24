@@ -28,13 +28,16 @@ module Client
       pair = find_pair(source, dest)
 
       if refresh || cache[pair[:name]].nil?
-        cache[pair[:name]] = HTTParty.get(
-          'https://max-api.maicoin.com/api/v2/order_book',
-          query: {
-            market: pair[:name],
-            asks_limit: 1,
-            bids_limit: 1
-          }
+        store_cache(
+          pair[:name],
+          HTTParty.get(
+            'https://max-api.maicoin.com/api/v2/order_book',
+            query: {
+              market: pair[:name],
+              asks_limit: 1,
+              bids_limit: 1
+            },
+          )
         )
       end
 

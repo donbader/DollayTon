@@ -8,6 +8,11 @@ module Client
       @cache[caller[0][/`.*'/][1..-2]] ||= {}
     end
 
+    def store_cache(key, value)
+      @cache[caller[0][/`.*'/][1..-2]] ||= {}
+      @cache[caller[0][/`.*'/][1..-2]][key] = value
+    end
+
     def print_cache
       ap @cache
     end

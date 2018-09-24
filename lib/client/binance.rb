@@ -22,7 +22,7 @@ module Client
       pair = find_pair(source, dest)
 
       if refresh || cache[pair[:name]].nil?
-        cache[pair[:name]] = @rest_api.depth(symbol: pair[:name], limit: 5)
+        store_cache(pair[:name], @rest_api.depth(symbol: pair[:name], limit: 5))
       end
 
       type = pair[:reversed] ? "bids" : "asks"

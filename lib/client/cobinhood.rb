@@ -27,7 +27,7 @@ module Client
       pair = find_pair(source, dest)
 
       if refresh || cache[pair[:name]].nil?
-        cache[pair[:name]] = @api.get_market_order_book(pair[:name], 1)
+        store_cache(pair[:name], @api.get_market_order_book(pair[:name], 1))
       end
 
       type = pair[:reversed] ? :bids : :asks
