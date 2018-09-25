@@ -9,13 +9,15 @@ module Client
     ]
 
     def self.corey
-      api_key = YAML.load_file("secrets.yml")["BINANCE"]["API_KEY"]
-      new(api_key: api_key)
+      secrets = YAML.load_file("secrets.yml")["BINANCE"]
+      api_key = secrets["API_KEY"]
+      secret_key = secrets["SECRET_KEY"]
+      new(api_key: api_key, secret_key: secret_key)
     end
 
     def initialize(api_key: nil, secret_key: nil)
       super
-      @rest_api = ::Binance::Client::REST.new(api_key: api_key)
+      @rest_api = ::Binance::Client::REST.new(api_key: api_key, secret_key: secret_key)
     end
 
     # Client::Binance.new.orderbook_price("USDT", "ETH", refresh: false)
@@ -47,7 +49,14 @@ module Client
 
     def place_order!(pair_name, method, price, size)
       if PLACE_ORDER_ENABLED
-        order = @rest_api.create_order!(symbol: pair_name, side: method.upcase, type: "LIMIT")
+        order = @rest_api.create_order!(
+          symbol: pair_name,
+          side: method.upcase,
+          type: "LIMIT",
+          price: price,
+          quantity: size,
+          time_in_force: 'GTC',
+        )
       else
         puts [self.class.name, pair_name, method, price, size].inspect
       end
