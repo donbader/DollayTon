@@ -25,7 +25,7 @@ module Client
       type = pair[:reversed] ? "bids" : "asks"
 
       if refresh || cache[pair[:name]][type].nil?
-        store_cache(pair[:name], @websocket_cache[:orderbook_price][pair[:name]].dup)
+        store_cache(pair[:name], @websocket_cache[:orderbook_price][pair[:name]])
       end
 
       price = cache[pair[:name]][type].first[0].to_f
