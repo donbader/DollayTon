@@ -14,8 +14,9 @@ module Client
     }
 
     def self.baimao
-      api_key = YAML.load_file("secrets.yml")["MAX"]["API_KEY"]
-      secret_key = YAML.load_file("secrets.yml")["MAX"]["API_KEY"]
+      secrets = YAML.load_file("secrets.yml")["MAX"]
+      api_key = secrets["ACCESS_KEY"]
+      secret_key = secrets["SECRET_KEY"]
       new(api_key: api_key, secret_key: secret_key)
     end
 
@@ -69,9 +70,24 @@ module Client
       cache[dest]
     end
 
+    # Client::Max.baimao.place_order!("ethusdt", :sell, 300, 0.1)
     def place_order!(pair_name, method, price, size)
       if PLACE_ORDER_ENABLED
         # PLACE REAL ORDER HERE
+        body = {
+          nonce: Time.now.to_i * 1000,
+          market: pair_name,
+          side: method,
+          volume: size,
+          price: price,
+          ord_type: "limit",
+        }
+
+        HTTParty.post(
+          'https://max-api.maicoin.com/api/v2/orders',
+          headers: generate_header(body),
+          query: body,
+        )
       else
         puts [self.class.name, pair_name, method, price, size].inspect
       end
@@ -88,11 +104,11 @@ module Client
     end
 
     private def generate_header(body)
-      payload = Base64.encode64(body.to_json)
+      payload = Base64.urlsafe_encode64(body.to_json)
       signature = OpenSSL::HMAC.hexdigest("SHA256", @secret_key, payload)
 
       {
-        "X-MAX-ACCESSKEY" => @access_key,
+        "X-MAX-ACCESSKEY" => @api_key,
         "X-MAX-PAYLOAD" => payload,
         "X-MAX-SIGNATURE" => signature,
       }
