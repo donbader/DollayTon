@@ -24,6 +24,7 @@ module Client
     #   price: price in order book,
     #   exchange_rate: will be inversed number if different direction,
     #   method: direction[:reversed] ? :sell : :buy,
+    #   stock: the remaining stock size,
     # }
     def orderbook_price(source, dest, refresh: false)
       raise NotImplementedError

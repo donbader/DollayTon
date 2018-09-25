@@ -15,14 +15,15 @@ module Client
     def self.baimao
       api_key = YAML.load_file("secrets.yml")["COBINHOOD"]["API_KEY"]
       api_key = nil
-      new(api_key)
+      new(api_key: api_key)
     end
 
-    def initialize(api_key)
+    def initialize(api_key: nil)
       super
       @api = CobinhoodApi.new(api_key: api_key)
     end
 
+    # Client::Cobinhood.new.orderbook_price("USDT", "ETH", refresh: false)
     def orderbook_price(source, dest, refresh: false)
       pair = find_pair(source, dest)
 
@@ -36,12 +37,15 @@ module Client
 
       exchange_rate = pair[:reversed] ? price : 1.0 / price
 
+      stock = cache[pair[:name]][type].first["size"] * cache[pair[:name]][type].first["count"]
+
       {
         client: self,
         pair_name: pair[:name],
         price: price,
         exchange_rate: exchange_rate,
         method: pair[:reversed] ? :sell : :buy,
+        stock: stock,
       }
     end
 
