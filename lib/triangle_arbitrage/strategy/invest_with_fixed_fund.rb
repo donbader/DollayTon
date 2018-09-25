@@ -1,29 +1,29 @@
 module TriangleArbitrage
   module Strategy
     class InvestWithFixedFund < Strategy::Base
-      def calculate(max_invest_amount:, refresh: true)
+      def calculate(max_fund:, refresh: true)
         result = [
-          calculate_triangle(max_invest_amount, @base, @coin1, @coin2, refresh: refresh),
-          calculate_triangle(max_invest_amount, @base, @coin2, @coin1, refresh: false),
+          calculate_triangle(max_fund, @base, @coin1, @coin2, refresh: refresh),
+          calculate_triangle(max_fund, @base, @coin2, @coin1, refresh: false),
         ].max_by { |direction| direction[:exchanged_percentage] }
 
-        invested_amount = max_invest_amount
+        invested_amount = max_fund
         profit = invested_amount * (result[:exchanged_percentage] - 1)
 
         result.merge(
-          max_invest_amount: "#{max_invest_amount} #{@base}",
+          max_invest_amount: "#{max_fund} #{@base}",
           invested_amount: "#{invested_amount} #{@base}",
           profit: profit,
         )
       end
 
-      def calculate_triangle(max_invest_amount, *coins, refresh: false)
+      def calculate_triangle(max_fund, *coins, refresh: false)
         result = {
           orders: [],
           exchanged_percentage: 1,
         }
 
-        prev_exchanged_fund = max_invest_amount
+        prev_exchanged_fund = max_fund
 
         coins.each_with_index do |coin, i|
           next_coin = coins[(i + 1) % coins.size]
