@@ -24,9 +24,6 @@ module TriangleArbitrage
         if result[:profit] > 0
           self.place_orders(result[:orders])
           earned += result[:profit]
-          puts "earned: #{earned}, Time elapsed: #{Time.now - time_start}"
-          puts "----------------------------------------------------"
-          break
         end
 
         puts "earned: #{earned}, Time elapsed: #{Time.now - time_start}"

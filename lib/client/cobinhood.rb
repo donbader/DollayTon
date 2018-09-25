@@ -59,6 +59,7 @@ module Client
 
     def place_order!(pair_name, method, price, size)
       method = method == :buy ? :bid : :ask
+      puts [self.class.name, pair_name, method, price, size].inspect
 
       if PLACE_ORDER_ENABLED
         order = nil
@@ -69,8 +70,6 @@ module Client
           puts "failed try again"
         end
         puts 'success'
-      else
-        puts [self.class.name, pair_name, method, price, size].inspect
       end
     end
 

@@ -72,6 +72,8 @@ module Client
 
     # Client::Max.baimao.place_order!("ethusdt", :sell, 300, 0.1)
     def place_order!(pair_name, method, price, size)
+      puts [self.class.name, pair_name, method, price, size].inspect
+
       if PLACE_ORDER_ENABLED
         # PLACE REAL ORDER HERE
         body = {
@@ -88,8 +90,6 @@ module Client
           headers: generate_header(body),
           query: body,
         )
-      else
-        puts [self.class.name, pair_name, method, price, size].inspect
       end
     end
 
