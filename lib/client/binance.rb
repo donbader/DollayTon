@@ -1,5 +1,6 @@
 module Client
   class Binance < Client::Base
+    include Singleton
     PLACE_ORDER_ENABLED = ENV["PLACE_ORDER"]
     FEE_RATE = 0.001
     PAIRS = [
@@ -8,27 +9,24 @@ module Client
       "BTCUSDT",
     ]
 
-    def self.corey
+    def initialize
+      super
       secrets = YAML.load_file("secrets.yml")["BINANCE"]
       api_key = secrets["API_KEY"]
       secret_key = secrets["SECRET_KEY"]
-      new(api_key: api_key, secret_key: secret_key)
-    end
-
-    def initialize(api_key: nil, secret_key: nil)
-      super
       @rest_api = ::Binance::Client::REST.new(api_key: api_key, secret_key: secret_key)
+      run_websocket_client
+      sleep(3) # Sleep 3 for waiting first data coming in
     end
 
     # Client::Binance.new.orderbook_price("USDT", "ETH", refresh: false)
     def orderbook_price(source, dest, refresh: false)
       pair = find_pair(source, dest)
-
-      if refresh || cache[pair[:name]].nil?
-        store_cache(pair[:name], @rest_api.depth(symbol: pair[:name], limit: 5))
-      end
-
       type = pair[:reversed] ? "bids" : "asks"
+
+      if refresh || cache[pair[:name]][type].nil?
+        store_cache(pair[:name], @websocket_cache[:orderbook_price][pair[:name]])
+      end
 
       price = cache[pair[:name]][type].first[0].to_f
 
@@ -62,12 +60,30 @@ module Client
       end
     end
 
+    # Store data into @websocket_cache
+    private def run_websocket_client
+      @websocket = ::Binance::Client::WebSocket.new
+      @websocket_cache = { orderbook_price: {} }
+      @websocket_thread = Thread.new do
+        EM.run do
+          # Listen to all interested coins
+          PAIRS.each do |pair_name|
+            @websocket.partial_book_depth(symbol: pair_name, level: "5", methods: {
+              message: proc { |e|
+                @websocket_cache[:orderbook_price][pair_name] = JSON.parse(e.data)
+              },
+            })
+          end
+        end
+      end
+    end
+
     private def find_pair(source, dest)
       name = PAIRS.find { |p| p == "#{dest}#{source}" }
-      return {name: name, reversed: false} if name
+      return { name: name, reversed: false } if name
 
       name = PAIRS.find { |p| p == "#{source}#{dest}" }
-      return {name: name, reversed: true} if name
+      return { name: name, reversed: true } if name
 
       raise "No such pair for #{dest}-#{source}"
     end
