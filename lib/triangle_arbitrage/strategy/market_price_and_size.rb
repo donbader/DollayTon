@@ -1,9 +1,10 @@
 module TriangleArbitrage
   module Strategy
     MAX_INVEST_AMOUNT = 999_999_999_999
+    MIN_INVEST_AMOUNT = 30
 
     class MarketPriceAndSize < Strategy::Base
-      def calculate(max_fund: MAX_INVEST_AMOUNT, refresh: true)
+      def calculate(min_fund: MIN_INVEST_AMOUNT, max_fund: MAX_INVEST_AMOUNT, refresh: true)
         result = [
           calculate_triangle(@base, @coin1, @coin2, refresh: refresh),
           calculate_triangle(@base, @coin2, @coin1, refresh: false),
@@ -11,6 +12,8 @@ module TriangleArbitrage
 
         max_invest_amount = result[:orders].first[:max_size] / result[:orders].first[:exchange_rate]
         invested_amount = [max_invest_amount, max_fund].min
+        invested_amount = 0 if invested_amount < min_fund
+
         profit = invested_amount * (result[:exchanged_percentage] - 1)
 
         result[:orders] = assign_invest_size(result[:orders], invested_amount)

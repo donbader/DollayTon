@@ -1,13 +1,15 @@
 module TriangleArbitrage
   module Strategy
     class InvestWithFixedFund < Strategy::Base
-      def calculate(max_fund:, refresh: true)
+      def calculate(min_fund:, max_fund:, refresh: true)
         result = [
           calculate_triangle(max_fund, @base, @coin1, @coin2, refresh: refresh),
           calculate_triangle(max_fund, @base, @coin2, @coin1, refresh: false),
         ].max_by { |direction| direction[:exchanged_percentage] }
 
         invested_amount = max_fund
+        invested_amount = 0 if invested_amount < min_fund
+
         profit = invested_amount * (result[:exchanged_percentage] - 1)
 
         result.merge(
