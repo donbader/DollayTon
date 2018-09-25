@@ -76,20 +76,25 @@ module Client
 
       if PLACE_ORDER_ENABLED
         # PLACE REAL ORDER HERE
-        body = {
-          nonce: Time.now.to_i * 1000,
-          market: pair_name,
-          side: method,
-          volume: size,
-          price: price,
-          ord_type: "limit",
-        }
+        response = OpenStruct.new(code: 400)
+        while response.code != 200
+          body = {
+            nonce: Time.now.to_f * 1000,
+            market: pair_name,
+            side: method,
+            volume: size,
+            price: price,
+            ord_type: "limit",
+          }
 
-        HTTParty.post(
-          'https://max-api.maicoin.com/api/v2/orders',
-          headers: generate_header(body),
-          query: body,
-        )
+          response = HTTParty.post(
+            'https://max-api.maicoin.com/api/v2/orders',
+            headers: generate_header(body),
+            query: body,
+          )
+
+          ap JSON.parse(response.body)
+        end
       end
     end
 

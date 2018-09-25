@@ -69,6 +69,8 @@ module Client
           break unless order.nil?
           puts "failed try again"
         end
+
+        ap order
         puts 'success'
       end
     end
