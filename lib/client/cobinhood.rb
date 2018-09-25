@@ -1,5 +1,6 @@
 module Client
   class Cobinhood < Client::Base
+    PLACE_ORDER_ENABLED = ENV["PLACE_ORDER"]
     # FIXME: hard-coded for now
     PAIRS = [
       "ETH-USDT",
@@ -14,7 +15,6 @@ module Client
 
     def self.baimao
       api_key = YAML.load_file("secrets.yml")["COBINHOOD"]["API_KEY"]
-      api_key = nil
       new(api_key: api_key)
     end
 
@@ -59,21 +59,19 @@ module Client
 
     def place_order!(pair_name, method, price, size)
       method = method == :buy ? :bid : :ask
-      order =
-        if ENV["PLACE_ORDER"]
-          nil
-        else
-          puts [self.class.name, pair_name, method, price, size].inspect
-          123
+
+      if PLACE_ORDER_ENABLED
+        order = nil
+        while order.nil?
+          order = @api.place_order(pair_name, method, "limit", size, price)
+
+          break unless order.nil?
+          puts "failed try again"
         end
-
-      while order.nil?
-        order = @api.place_order(pair_name, method, "limit", size, price)
-
-        break unless order.nil?
-        puts "failed try again"
+        puts 'success'
+      else
+        puts [self.class.name, pair_name, method, price, size].inspect
       end
-      puts 'success'
     end
 
     private def find_pair(source, dest)

@@ -1,5 +1,6 @@
 module Client
   class Max < Client::Base
+    PLACE_ORDER_ENABLED = ENV["PLACE_ORDER"]
     # FIXME: hard-coded for now
     PAIRS = [
       "ethusdt",
@@ -69,7 +70,11 @@ module Client
     end
 
     def place_order!(pair_name, method, price, size)
-      puts [self.class.name, pair_name, method, price, size].inspect
+      if PLACE_ORDER_ENABLED
+        # PLACE REAL ORDER HERE
+      else
+        puts [self.class.name, pair_name, method, price, size].inspect
+      end
     end
 
     private def find_pair(source, dest)

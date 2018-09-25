@@ -1,5 +1,6 @@
 module Client
   class Binance < Client::Base
+    PLACE_ORDER_ENABLED = ENV["PLACE_ORDER"]
     FEE_RATE = 0.001
     PAIRS = [
       "ETHBTC",
@@ -8,8 +9,7 @@ module Client
     ]
 
     def self.corey
-      # api_key = YAML.load_file("secrets.yml")["BINANCE"]["API_KEY"]
-      api_key = nil
+      api_key = YAML.load_file("secrets.yml")["BINANCE"]["API_KEY"]
       new(api_key: api_key)
     end
 
@@ -46,15 +46,11 @@ module Client
     end
 
     def place_order!(pair_name, method, price, size)
-      order =
-        if ENV["PLACE_ORDER"]
-          nil
-        else
-          puts [self.class.name, pair_name, method, price, size].inspect
-          123
-        end
-
-      order = @rest_api.create_order!(symbol: pair_name, side: method.upcase, type: "LIMIT") if order.nil?
+      if PLACE_ORDER_ENABLED
+        order = @rest_api.create_order!(symbol: pair_name, side: method.upcase, type: "LIMIT")
+      else
+        puts [self.class.name, pair_name, method, price, size].inspect
+      end
     end
 
     private def find_pair(source, dest)
