@@ -1,15 +1,16 @@
-DEBUG = false
 
+# TriangleArbitrage::Robot.hi(1000, strategy_class: TriangleArbitrage::Strategy::MarketPriceAndSize)
+# TriangleArbitrage::Robot.hi(1000, strategy_class: TriangleArbitrage::Strategy::InvestWithFixedFund)
 module TriangleArbitrage
   class Robot
 
-    def self.hi
-      bot = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC")
-      bot.run(7.hour, max_invest_amount: 1000)
+    def self.hi(max_invest_amount, strategy_class:)
+      bot = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC", strategy_class: strategy_class)
+      bot.run(7.hour, max_invest_amount: max_invest_amount)
     end
 
-    def initialize(base, coin1, coin2)
-      @strategy = Strategy::MarketPriceAndSize.new(base, coin1, coin2)
+    def initialize(base, coin1, coin2, strategy_class: Strategy::MarketPriceAndSize)
+      @strategy = strategy_class.new(base, coin1, coin2)
     end
 
     def run(total_time, max_invest_amount:)
