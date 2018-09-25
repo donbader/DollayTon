@@ -14,15 +14,15 @@ module Client
     }
 
     def self.baimao
-      # api_key = YAML.load_file("secrets.yml")["MAX"]["API_KEY"]
-      # new(api_key)
-      api_key = nil
-      new(api_key: api_key)
+      api_key = YAML.load_file("secrets.yml")["MAX"]["API_KEY"]
+      secret_key = YAML.load_file("secrets.yml")["MAX"]["API_KEY"]
+      new(api_key: api_key, secret_key: secret_key)
     end
 
-    def initialize(api_key: nil)
+    def initialize(api_key: nil, secret_key: nil)
       super
-      # @header = { api: api_key }
+      @api_key = api_key
+      @secret_key = secret_key
     end
 
     # Client::Max.new.orderbook_price("USDT", "ETH", refresh: false)
@@ -85,6 +85,17 @@ module Client
       return {name: name, reversed: true} if name
 
       raise "No such pair for #{dest}#{source}"
+    end
+
+    private def generate_header(body)
+      payload = Base64.encode64(body.to_json)
+      signature = OpenSSL::HMAC.hexdigest("SHA256", @secret_key, payload)
+
+      {
+        "X-MAX-ACCESSKEY" => @access_key,
+        "X-MAX-PAYLOAD" => payload,
+        "X-MAX-SIGNATURE" => signature,
+      }
     end
   end
 end
