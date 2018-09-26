@@ -14,15 +14,16 @@ module Client
     }
 
     def self.baimao
-      # api_key = YAML.load_file("secrets.yml")["MAX"]["API_KEY"]
-      # new(api_key)
-      api_key = nil
-      new(api_key: api_key)
+      secrets = YAML.load_file("secrets.yml")["MAX"]
+      api_key = secrets["ACCESS_KEY"]
+      secret_key = secrets["SECRET_KEY"]
+      new(api_key: api_key, secret_key: secret_key)
     end
 
-    def initialize(api_key: nil)
+    def initialize(api_key: nil, secret_key: nil)
       super
-      # @header = { api: api_key }
+      @api_key = api_key
+      @secret_key = secret_key
     end
 
     # Client::Max.new.orderbook_price("USDT", "ETH", refresh: false)
@@ -69,12 +70,37 @@ module Client
       cache[dest]
     end
 
+    # Client::Max.baimao.place_order!("ethusdt", :sell, 300, 0.1)
     def place_order!(pair_name, method, price, size)
+      print [self.class.name, pair_name, method, price, size].inspect
+
+      response = OpenStruct.new(code: 400)
+
       if PLACE_ORDER_ENABLED
         # PLACE REAL ORDER HERE
-      else
-        puts [self.class.name, pair_name, method, price, size].inspect
+        while response.code != 200
+          body = {
+            nonce: Time.now.to_f * 1000,
+            market: pair_name,
+            side: method,
+            volume: size,
+            price: price,
+            ord_type: "limit",
+          }
+
+          response = HTTParty.post(
+            'https://max-api.maicoin.com/api/v2/orders',
+            headers: generate_header(body),
+            query: body,
+          )
+          print "."
+        end
+
+        print "success"
       end
+
+      puts
+      ap JSON.parse(response.body)
     end
 
     private def find_pair(source, dest)
@@ -85,6 +111,17 @@ module Client
       return {name: name, reversed: true} if name
 
       raise "No such pair for #{dest}#{source}"
+    end
+
+    private def generate_header(body)
+      payload = Base64.urlsafe_encode64(body.to_json)
+      signature = OpenSSL::HMAC.hexdigest("SHA256", @secret_key, payload)
+
+      {
+        "X-MAX-ACCESSKEY" => @api_key,
+        "X-MAX-PAYLOAD" => payload,
+        "X-MAX-SIGNATURE" => signature,
+      }
     end
   end
 end

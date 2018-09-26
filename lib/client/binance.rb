@@ -46,6 +46,8 @@ module Client
     end
 
     def place_order!(pair_name, method, price, size)
+      print [self.class.name, pair_name, method, price, size].inspect
+
       if PLACE_ORDER_ENABLED
         order = @rest_api.create_order!(
           symbol: pair_name,
@@ -55,9 +57,10 @@ module Client
           quantity: size,
           time_in_force: 'GTC',
         )
-      else
-        puts [self.class.name, pair_name, method, price, size].inspect
       end
+
+      puts
+      ap order
     end
 
     # Store data into @websocket_cache

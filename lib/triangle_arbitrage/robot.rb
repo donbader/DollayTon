@@ -1,24 +1,24 @@
 
-# TriangleArbitrage::Robot.hi(1000, strategy_class: TriangleArbitrage::Strategy::MarketPriceAndSize)
-# TriangleArbitrage::Robot.hi(1000, strategy_class: TriangleArbitrage::Strategy::InvestWithFixedFund)
+# TriangleArbitrage::Robot.hi(50, strategy_class: TriangleArbitrage::Strategy::MarketPriceAndSize)
+# TriangleArbitrage::Robot.hi(50, strategy_class: TriangleArbitrage::Strategy::InvestWithFixedFund)
 module TriangleArbitrage
   class Robot
 
-    def self.hi(max_invest_amount, strategy_class:)
+    def self.hi(max_fund, strategy_class:)
       bot = TriangleArbitrage::Robot.new("USDT", "ETH", "BTC", strategy_class: strategy_class)
-      bot.run(7.hour, max_invest_amount: max_invest_amount)
+      bot.run(7.hour, min_fund: 30, max_fund: max_fund)
     end
 
     def initialize(base, coin1, coin2, strategy_class: Strategy::MarketPriceAndSize)
       @strategy = strategy_class.new(base, coin1, coin2)
     end
 
-    def run(total_time, max_invest_amount:)
+    def run(total_time, min_fund:, max_fund:)
       time_start = Time.now
       earned = 0
 
       while Time.now - time_start < total_time
-        result = @strategy.calculate(max_invest_amount: max_invest_amount, refresh: true)
+        result = @strategy.calculate(min_fund: min_fund, max_fund: max_fund, refresh: true)
         ap result
 
         if result[:profit] > 0

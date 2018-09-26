@@ -8,8 +8,8 @@ module TriangleArbitrage
 
         @clients = [
           Client::Cobinhood.baimao,
-          Client::Binance.instance,
           Client::Max.baimao,
+          # Client::Binance.instance,
         ]
       end
 
