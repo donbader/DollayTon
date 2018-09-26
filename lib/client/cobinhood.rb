@@ -59,20 +59,22 @@ module Client
 
     def place_order!(pair_name, method, price, size)
       method = method == :buy ? :bid : :ask
-      puts [self.class.name, pair_name, method, price, size].inspect
+      print [self.class.name, pair_name, method, price, size].inspect
 
+      order = nil
       if PLACE_ORDER_ENABLED
-        order = nil
         while order.nil?
           order = @api.place_order(pair_name, method, "limit", size, price)
 
           break unless order.nil?
-          puts "failed try again"
+          print "."
         end
 
-        ap order
-        puts 'success'
+        print 'success'
       end
+
+      puts
+      ap order
     end
 
     private def find_pair(source, dest)

@@ -72,11 +72,12 @@ module Client
 
     # Client::Max.baimao.place_order!("ethusdt", :sell, 300, 0.1)
     def place_order!(pair_name, method, price, size)
-      puts [self.class.name, pair_name, method, price, size].inspect
+      print [self.class.name, pair_name, method, price, size].inspect
+
+      response = OpenStruct.new(code: 400)
 
       if PLACE_ORDER_ENABLED
         # PLACE REAL ORDER HERE
-        response = OpenStruct.new(code: 400)
         while response.code != 200
           body = {
             nonce: Time.now.to_f * 1000,
@@ -92,10 +93,14 @@ module Client
             headers: generate_header(body),
             query: body,
           )
-
-          ap JSON.parse(response.body)
+          print "."
         end
+
+        print "success"
       end
+
+      puts
+      ap JSON.parse(response.body)
     end
 
     private def find_pair(source, dest)
