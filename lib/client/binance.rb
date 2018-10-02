@@ -15,8 +15,8 @@ module Client
       api_key = secrets["API_KEY"]
       secret_key = secrets["SECRET_KEY"]
       @rest_api = ::Binance::Client::REST.new(api_key: api_key, secret_key: secret_key)
-      run_websocket_client
-      sleep(3) # Sleep 3 for waiting first data coming in
+      # run_websocket_client
+      # sleep(3) # Sleep 3 for waiting first data coming in
     end
 
     # Client::Binance.new.orderbook_price("USDT", "ETH", refresh: false)

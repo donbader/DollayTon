@@ -1,5 +1,6 @@
 module Client
   class Cobinhood < Client::Base
+    attr_reader :api
     PLACE_ORDER_ENABLED = ENV["PLACE_ORDER"]
     # FIXME: hard-coded for now
     PAIRS = [
@@ -13,7 +14,7 @@ module Client
       buy: :bids,
     }
 
-    def self.baimao
+    def self.corey
       api_key = YAML.load_file("secrets.yml")["COBINHOOD"]["API_KEY"]
       new(api_key: api_key)
     end
@@ -75,6 +76,20 @@ module Client
 
       puts
       ap order
+    end
+
+    def get_market_price
+      # => {"trading_pair_id"=>"ETH-USDT",
+      # "timestamp"=>1538400720000,
+      # "24h_high"=>"238.46",
+      # "24h_low"=>"226.72",
+      # "24h_open"=>"236.53",
+      # "24h_volume"=>"1680.9346363399998",
+      # "last_trade_price"=>"229.59",
+      # "highest_bid"=>"229.25",
+      # "lowest_ask"=>"230.23"}
+
+      @api.get_ticker("ETH-USDT")["last_trade_price"].to_f
     end
 
     private def find_pair(source, dest)

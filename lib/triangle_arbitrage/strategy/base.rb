@@ -7,7 +7,7 @@ module TriangleArbitrage
         @coin2 = coin2
 
         @clients = [
-          Client::Cobinhood.baimao,
+          Client::Cobinhood.corey,
           Client::Max.baimao,
           # Client::Binance.instance,
         ]
