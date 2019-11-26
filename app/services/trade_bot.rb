@@ -4,6 +4,7 @@
 #   bot.stop
 class TradeBot
   attr_reader :env
+
   def initialize
     @env = {
       end_time: 1.day.from_now,
@@ -33,6 +34,6 @@ class TradeBot
   end
 
   def perform(strategy)
-    strategy.perform(current_price_data)
+    strategy.perform(current_price_data, self)
   end
 end
