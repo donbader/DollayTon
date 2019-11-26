@@ -1,6 +1,7 @@
 
 # TriangleArbitrage::Robot.hi(50, strategy_class: TriangleArbitrage::Strategy::MarketPriceAndSize)
 # TriangleArbitrage::Robot.hi(50, strategy_class: TriangleArbitrage::Strategy::InvestWithFixedFund)
+# TriangleArbitrage::Robot.hi(50, strategy_class: TriangleArbitrage::Strategy::NoBrain)
 module TriangleArbitrage
   class Robot
 
@@ -17,18 +18,18 @@ module TriangleArbitrage
       time_start = Time.now
       earned = 0
 
-      while Time.now - time_start < total_time
+      # while Time.now - time_start < total_time
         result = @strategy.calculate(min_fund: min_fund, max_fund: max_fund, refresh: true)
         ap result
 
-        if result[:profit] > 0
+        if result.any? && result[:profit] > 0
           self.place_orders(result[:orders])
           earned += result[:profit]
         end
 
         puts "earned: #{earned}, Time elapsed: #{Time.now - time_start}"
         puts "----------------------------------------------------"
-      end
+      # end
     end
 
     def place_orders(orders)
