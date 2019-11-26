@@ -15,6 +15,7 @@ services:
     restart: always
     volumes:
       - .:/myapp
+      - ./myapp/tmp
     ports:
       - "3000:3000"
     depends_on:
