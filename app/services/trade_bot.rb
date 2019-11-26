@@ -1,3 +1,8 @@
+# @example
+#   bot = TradeBot.new
+#   bot.run
+#   ap bot.current_data
+#   bot.stop
 class TradeBot
   attr_reader :env
   def initialize
