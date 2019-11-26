@@ -40,7 +40,6 @@ gem "httparty"
 
 # Clients
 gem 'cobinhood_api'
-gem 'binance'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
