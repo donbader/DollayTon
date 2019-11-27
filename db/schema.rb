@@ -25,8 +25,10 @@ ActiveRecord::Schema.define(version: 2019_11_27_000109) do
     t.bigint "account_id"
     t.string "exchange"
     t.string "type"
-    t.decimal "amount", precision: 16, scale: 2
+    t.decimal "quantity", precision: 16, scale: 2
     t.decimal "price", precision: 16, scale: 2
+    t.string "from_coin"
+    t.string "to_coin"
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
