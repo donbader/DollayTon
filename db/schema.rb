@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_27_000109) do
+ActiveRecord::Schema.define(version: 2019_11_27_164312) do
 
   create_table "accounts", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.string "exchange"
@@ -32,8 +32,11 @@ ActiveRecord::Schema.define(version: 2019_11_27_000109) do
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "parent_id"
     t.index ["account_id"], name: "index_orders_on_account_id"
+    t.index ["parent_id"], name: "index_orders_on_parent_id"
   end
 
   add_foreign_key "orders", "accounts"
+  add_foreign_key "orders", "orders", column: "parent_id"
 end
