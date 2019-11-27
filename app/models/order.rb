@@ -1,3 +1,10 @@
 class Order < ApplicationRecord
-  enum direction: { right_to_left: true, left_to_right: false }
+  attribute :status, default: 'waiting'
+
+  enum direction: { bid: true, ask: false }
+  enum status: {
+    waiting: 'waiting',
+    completed: 'completed',
+    cancelled: 'cancelled',
+  }
 end

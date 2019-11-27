@@ -1,4 +1,4 @@
 # used for stop limit
-class PendingMarketOrder < Order
+class StopLossOrder < Order
   belongs_to :parent_order, class_name: 'Order'
 end
