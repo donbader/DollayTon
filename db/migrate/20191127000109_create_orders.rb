@@ -5,7 +5,7 @@ class CreateOrders < ActiveRecord::Migration[5.2]
       t.string :exchange
       t.string :pair_name
       t.string :type
-      t.boolean :direction, default: false
+      t.boolean :direction, null: false
       t.decimal :quantity, precision: 16, scale: 2
       t.decimal :price, precision: 16, scale: 2
       t.string :status
