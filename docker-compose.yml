@@ -2,17 +2,15 @@ version: '3'
 services:
   mysql:
     image: mysql:8.0.12
+    command: mysqld --default-authentication-plugin=mysql_native_password
     ports:
-      - "3333:3306"
-    volumes:
-      - ./tmp/db:/var/lib/mysql
+      - "3308:3306" # export port 3308 so that won't conflict with the local one
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - MYSQL_DATABASE=dev
   web:
     build: .
     command: sh ./start_server.sh
-    restart: always
     volumes:
       - .:/myapp
       - ./myapp/tmp
