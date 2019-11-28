@@ -1,8 +1,12 @@
 module Binance
   module Client
     class WebsocketMachine
+      def initialize(url)
+        @url = url
+      end
+
       def client
-        @websocket ||= Binance::Client::Websocket.new
+        @websocket ||= Binance::Client::Websocket.new(@url)
       end
 
       def stop

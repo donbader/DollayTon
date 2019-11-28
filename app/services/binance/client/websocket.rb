@@ -5,11 +5,8 @@ module Binance
   module Client
     class Websocket
       attr_reader :base_url
-      def initialize
-        # exchanges url
-        # @base_url = 'wss://stream.binance.com:9443'
-        # futures url
-        @base_url = 'wss://fstream.binance.com'
+      def initialize(url)
+        @base_url = url
       end
 
       # Public: Create a single WebSocket stream
