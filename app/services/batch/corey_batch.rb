@@ -1,19 +1,21 @@
 # frozen_string_literal: true
+
 module Batch
   class CoreyBatch
     include AASM
 
     PRICE_HISTORY_MIN_SIZE = 30
     MAX_MARGIN = 20
-    MIN_MARGIN = MAX_MARGIN / 3
+    MIN_MARGIN = 2
 
-    attr_reader :bid_history, :ask_history, :buy_limit, :sell_limit
+    attr_reader :bid_history, :ask_history, :current_order, :last_order
 
     def initialize
-      @ask_history = TempHistory.new("ask_history", data_max_size: 60)
-      @bid_history = TempHistory.new("bid_history", data_max_size: 60)
-      @buy_limit = nil
-      @sell_limit = nil
+      @ask_history = TempHistory.new('ask_history', data_max_size: 60)
+      @bid_history = TempHistory.new('bid_history', data_max_size: 60)
+
+      @current_order = { created_at: Time.zone.now }
+      @last_order = { created_at: Time.zone.now }
     end
 
     aasm do
@@ -29,17 +31,29 @@ module Batch
           after: proc { |min_ask, max_bid|
             ask_history.insert(min_ask)
             bid_history.insert(max_bid)
+
+            if should_start_ordering?
+              time_elapased = Time.zone.now - @last_order[:created_at]
+              @last_order = @current_order.dup
+
+              @current_order = {
+                sell: expected_sell_limit_price,
+                buy: expected_buy_limit_price,
+                created_at: Time.zone.now,
+                time_elapased: time_elapased,
+              }
+            end
           }
 
-        transitions \
-          from: :gathering_price_history,
-          to: :completed,
-          if: :should_restart?
+        # transitions \
+        #   from: :gathering_price_history,
+        #   to: :completed,
+        #   if: :should_restart?
 
-        transitions \
-          from: :gathering_price_history,
-          to: :processing,
-          after: :process_batch
+        # transitions \
+        #   from: :gathering_price_history,
+        #   to: :gathering_price_history,
+        #   after: :process_batch
       end
 
       event :complete, guard: :can_wrap_up_orders? do
@@ -50,30 +64,7 @@ module Batch
       end
     end
 
-    def process_batch(min_ask, max_bid)
-      # if @buy_limit || @sell_limit
-      #   raise "cannot create orders already"
-      # end
-
-      # buy_amount = [expected_buy_limit_price, max_bid].min
-      # @buy_limit = LimitOrder.create_with_stop_loss!(
-      #   bid_history.min,
-      #   exchange: "binance",
-      #   price: buy_amount,
-      #   pair_name: "BTCUSDT",
-      #   direction: "bid",
-      # )
-
-      # sell_amount = [expected_sell_limit_price, min_ask].max
-      # # sell-limit order
-      # @sell_limit = LimitOrder.create_with_stop_loss!(
-      #   ask_history.max,
-      #   exchange: "binance",
-      #   price: sell_amount,
-      #   pair_name: "BTCUSDT",
-      #   direction: "ask",
-      # )
-    end
+    def process_batch(min_ask, max_bid); end
 
     #
     # Helpers
@@ -86,27 +77,16 @@ module Batch
       bid_history.most_frequent.keys.min
     end
 
-    def should_keep_gathering?(min_ask, max_bid)
+    def should_start_ordering?
+      (expected_sell_limit_price - expected_buy_limit_price) >= MIN_MARGIN
+    end
+
+    def should_keep_gathering?(_min_ask, _max_bid)
       true
     end
 
     def should_restart?(_current_market_price)
       ask_history.max - bid_history.min > MAX_MARGIN
-    end
-
-    def can_wrap_up_orders?
-      (!sell_limit.waiting? && !buy_limit.waiting?) || \
-        (!sell_limit.stop_loss_order.waiting? && !sell_limit.waiting?) || \
-        (!buy_limit.stop_loss_order.waiting? && !buy_limit.waiting?)
-    end
-
-    def cancel_useless_waiting_order
-      [
-        buy_limit,
-        sell_limit,
-        buy_limit.stop_loss_order,
-        sell_limit.stop_loss_order,
-      ].select(&:waiting?).each(&:cancelled!)
     end
 
     # =============
@@ -115,15 +95,15 @@ module Batch
         '',
         "[#{self.class}]______________________________".green,
         "[[#{aasm.current_state}]]".yellow,
-        {
-          buy_limit: buy_limit&.price,
-          sell_limit: sell_limit&.price,
-          expected_buy_limit_price: expected_buy_limit_price,
-          expected_sell_limit_price: expected_sell_limit_price,
-        }.awesome_inspect(indent: -4, index: false, ruby19_syntax: true),
         ask_history.inspect,
         bid_history.inspect,
-        "________________________________________________".green
+        {
+          current_order: @current_order,
+          last_order: @last_order,
+          expected_buy_limit_price: expected_buy_limit_price,
+          expected_sell_limit_price: expected_sell_limit_price
+        }.awesome_inspect(indent: -4, index: false, ruby19_syntax: true),
+        '________________________________________________'.green
       ].join("\n")
     end
   end

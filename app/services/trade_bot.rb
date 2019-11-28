@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # @example
-#   bot = TradeBot.new
-#   bot.perform(CoreyStrategy)
-#   bot.stop
+#   TradeBot.instance.run
+#   TradeBot.instance.output!
+#   TradeBot.instance.output!
 class TradeBot
   include Singleton
 
@@ -98,7 +98,5 @@ class TradeBot
     return unless current_price_data.present?
 
     current_strategy.new(current_price_data, self).perform
-  rescue StandardError => e
-    ap e
   end
 end
