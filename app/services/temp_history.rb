@@ -23,10 +23,14 @@ class TempHistory
 
   def inspect
     [
-      "[#{self.class}] (:#{tag})",
-      "data: [#{min}..#{max}] (size: #{size} / #{data_max_size})",
-      "most_frequent: #{most_frequent}",
-    ].join("  \n")
+      "---------- (#{tag}) -----------".blue,
+      {
+        updated_at: updated_at,
+        data: "[#{min}..#{max}] (size: #{size} / #{data_max_size})",
+        mean: mean,
+        most_frequent: most_frequent,
+      }.awesome_inspect(indent: -4, index: false, ruby19_syntax: true),
+    ].join("\n")
   end
 
   def to_s

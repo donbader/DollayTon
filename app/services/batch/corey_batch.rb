@@ -118,15 +118,19 @@ module Batch
     # =============
     def inspect
       [
-        "[#{self.class}] (:#{aasm.current_state})",
-        "buy_limit: #{buy_limit&.price}",
-        "sell_limit: #{sell_limit&.price}",
-        "expected_buy_limit_price: #{expected_buy_limit_price}",
-        "expected_sell_limit_price: #{expected_sell_limit_price}",
-        "ask_history: #{ask_history}",
-        "bid_history: #{bid_history}",
-        "---------------------",
-      ].join("  \n")
+        '',
+        "[#{self.class}]______________________________".green,
+        "[[#{aasm.current_state}]]".yellow,
+        {
+          buy_limit: buy_limit&.price,
+          sell_limit: sell_limit&.price,
+          expected_buy_limit_price: expected_buy_limit_price,
+          expected_sell_limit_price: expected_sell_limit_price,
+        }.awesome_inspect(indent: -4, index: false, ruby19_syntax: true),
+        ask_history.inspect,
+        bid_history.inspect,
+        "________________________________________________".green
+      ].join("\n")
     end
   end
 end
