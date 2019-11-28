@@ -39,6 +39,7 @@ class TempHistory
       {
         updated_at: updated_at,
         data: "[#{min}..#{max}] (size: #{size} / #{data_max_size})",
+        current: data.last,
         mean: mean,
         most_frequent: most_frequent,
       }.awesome_inspect(indent: -4, index: false, ruby19_syntax: true),

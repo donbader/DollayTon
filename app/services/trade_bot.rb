@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # @example
 #   bot = TradeBot.new
 #   bot.perform(CoreyStrategy)
@@ -15,6 +17,8 @@ class TradeBot
       completed_batches: [],
       current_price_data: nil,
       running: false,
+      output: {},
+      error: nil
     }
   end
 
@@ -53,9 +57,12 @@ class TradeBot
 
     @processing_machine = Thread.new do
       while running?
-        perform
-        sleep(0.5.seconds)
+        result = perform
+        ap(result) if env[:output][:debugging]
+        sleep(0.2.seconds)
       end
+    rescue StandardError => e
+      env[:error] = e
     end
   end
 
@@ -79,17 +86,15 @@ class TradeBot
     env[:running]
   end
 
-  def perform
-    return unless current_price_data.present?
-    current_strategy.new(current_price_data, self).perform
-  rescue => e
-    ap e
+  def output!
+    env[:output][:debugging] = !env[:output][:debugging]
   end
 
-  def print_result(interval: 3.seconds)
-    while true
-      puts batch.inspect
-      sleep(interval)
-    end
+  def perform
+    return unless current_price_data.present?
+
+    current_strategy.new(current_price_data, self).perform
+  rescue StandardError => e
+    ap e
   end
 end
