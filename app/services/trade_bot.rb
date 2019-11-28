@@ -25,14 +25,12 @@ class TradeBot
     start_processing_order
 
     env[:running] = true
-
-    self
   end
 
   def stop
     env[:running] = false
-    @processing_machine.exit
-    @websocket_machine.stop
+    @processing_machine&.exit
+    @websocket_machine&.stop
   end
 
   def start_updating_price
@@ -56,7 +54,7 @@ class TradeBot
     @processing_machine = Thread.new do
       while running?
         perform
-        sleep(0.2.seconds)
+        sleep(0.5.seconds)
       end
     end
   end
@@ -85,7 +83,13 @@ class TradeBot
     return unless current_price_data.present?
     current_strategy.new(current_price_data, self).perform
   rescue => e
-    binding.pry
-    123
+    ap e
+  end
+
+  def print_result(interval: 3.seconds)
+    while true
+      puts batch.inspect
+      sleep(interval)
+    end
   end
 end

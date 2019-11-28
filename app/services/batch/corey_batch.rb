@@ -10,8 +10,8 @@ module Batch
     attr_reader :bid_history, :ask_history, :buy_limit, :sell_limit
 
     def initialize
-      @ask_history = TempHistory.new("ask_history", data_max_size: 100)
-      @bid_history = TempHistory.new("bid_history", data_max_size: 100)
+      @ask_history = TempHistory.new("ask_history", data_max_size: 500)
+      @bid_history = TempHistory.new("bid_history", data_max_size: 500)
       @buy_limit = nil
       @sell_limit = nil
     end
@@ -51,28 +51,28 @@ module Batch
     end
 
     def process_batch(min_ask, max_bid)
-      if @buy_limit || @sell_limit
-        raise "cannot create orders already"
-      end
+      # if @buy_limit || @sell_limit
+      #   raise "cannot create orders already"
+      # end
 
-      buy_amount = [expected_buy_limit_price, max_bid].min
-      @buy_limit = LimitOrder.create_with_stop_loss!(
-        bid_history.min,
-        exchange: "binance",
-        price: buy_amount,
-        pair_name: "BTCUSDT",
-        direction: "bid",
-      )
+      # buy_amount = [expected_buy_limit_price, max_bid].min
+      # @buy_limit = LimitOrder.create_with_stop_loss!(
+      #   bid_history.min,
+      #   exchange: "binance",
+      #   price: buy_amount,
+      #   pair_name: "BTCUSDT",
+      #   direction: "bid",
+      # )
 
-      sell_amount = [expected_sell_limit_price, min_ask].max
-      # sell-limit order
-      @sell_limit = LimitOrder.create_with_stop_loss!(
-        ask_history.max,
-        exchange: "binance",
-        price: sell_amount,
-        pair_name: "BTCUSDT",
-        direction: "ask",
-      )
+      # sell_amount = [expected_sell_limit_price, min_ask].max
+      # # sell-limit order
+      # @sell_limit = LimitOrder.create_with_stop_loss!(
+      #   ask_history.max,
+      #   exchange: "binance",
+      #   price: sell_amount,
+      #   pair_name: "BTCUSDT",
+      #   direction: "ask",
+      # )
     end
 
     #
@@ -87,13 +87,7 @@ module Batch
     end
 
     def should_keep_gathering?(min_ask, max_bid)
-      _current_market_price = (min_ask + max_bid) / 2
-      return true if ask_history.size <= PRICE_HISTORY_MIN_SIZE
-
-      order_pair_diff = expected_sell_limit_price - expected_buy_limit_price
-      return true if order_pair_diff <= MIN_MARGIN
-
-      false
+      true
     end
 
     def should_restart?(_current_market_price)

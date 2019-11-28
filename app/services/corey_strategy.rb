@@ -46,43 +46,12 @@ class CoreyStrategy
     if current_batch.gathering_price_history?
       current_batch.process(min_ask, max_bid)
     elsif current_batch.processing?
-      report_price
-      # Update Orders status
-      [
-        current_batch.buy_limit,
-        current_batch.sell_limit,
-      ].each do |order|
-        if may_complete_order?(order)
-          puts "completing #{order.as_json}"
-          order.completed!
-        end
-      end
-
-      if current_batch.may_complete?
-        current_batch.complete
-      end
-
-      [
-        current_batch.buy_limit.stop_loss_order,
-        current_batch.sell_limit.stop_loss_order,
-      ].each do |order|
-        if may_complete_order?(order)
-          puts "completing #{order.as_json}"
-          order.completed!
-        end
-      end
-
-      if current_batch.may_complete?
-        current_batch.complete
-      end
     elsif current_batch.completed?
       trader.env[:completed_batches] << current_batch
       trader.env[:batch] = current_batch.class.new
     end
 
     current_batch
-  rescue => e
-    binding.pry
   end
 
   def report_price

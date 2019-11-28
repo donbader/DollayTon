@@ -1,15 +1,21 @@
 class TempHistory
-  attr_reader :data, :tag, :data_max_size
+  attr_reader :data, :tag, :data_max_size, :updated_at
   def initialize(tag = "history#{rand(100)}", data_max_size: nil)
     @tag = tag
     @data = []
     @data_max_size = data_max_size
+    @updated_at = nil
   end
 
-  # will insert into data in sorted way
+  # When reaching max size, will pop the oldest data
+  # when price is the same, then choose not to insert
   def insert(price)
+    return if price == data.last
+
     data << price
     data.shift if data_max_size && (data.size > data_max_size)
+
+    @updated_at = Time.zone.now
   end
 
   # @return [Array] array of most frequent price
@@ -19,6 +25,12 @@ class TempHistory
     frequency = data.each_with_object(Hash.new(0)) { |v, h| h[v.to_i] += 1; }
     max = frequency.values.max
     frequency.select { |_, f| f == max }.keys
+  end
+
+  def mean
+    (data.sum / size).round(2)
+  rescue => e
+    0
   end
 
   def inspect
