@@ -79,11 +79,11 @@ module Batch
     # Helpers
     #
     def expected_sell_limit_price
-      ask_history.most_frequent.max
+      ask_history.most_frequent.keys.max
     end
 
     def expected_buy_limit_price
-      bid_history.most_frequent.min
+      bid_history.most_frequent.keys.min
     end
 
     def should_keep_gathering?(min_ask, max_bid)

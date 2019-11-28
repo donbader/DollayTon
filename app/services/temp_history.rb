@@ -23,8 +23,11 @@ class TempHistory
     # Use integer so that it's helpful for gathering
     # TODO: can determin the rounding
     frequency = data.each_with_object(Hash.new(0)) { |v, h| h[v.to_i] += 1; }
+
+    # Map to the portion
+    frequency = frequency.map { |k, v| [k, (v.to_d / data.size).round(2)] }.to_h
     max = frequency.values.max
-    frequency.select { |_, f| f == max }.keys
+    frequency.select { |_, f| f == max }
   end
 
   def mean

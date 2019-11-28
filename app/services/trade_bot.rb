@@ -90,6 +90,10 @@ class TradeBot
     env[:output][:debugging] = !env[:output][:debugging]
   end
 
+  def last_error
+    env[:error]
+  end
+
   def perform
     return unless current_price_data.present?
 
