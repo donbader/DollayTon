@@ -2,8 +2,8 @@ class LimitOrder < Order
   has_one :stop_loss_order, foreign_key: :parent_order_id, class_name: 'StopLossOrder'
 
   def self.create_with_stop_loss!(stop_loss_price, **args)
-    direction = args[:direction]
-    reversed_direction = direction.is_a?(String) ? !directions[direction] : !direction
+    reversed_direction = args[:direction] == "ask" ? "bid" : "ask"
+
     transaction do
       limit_order = create!(**args)
       limit_order.create_stop_loss_order!(

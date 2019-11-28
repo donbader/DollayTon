@@ -3,37 +3,86 @@
 #   bot.perform(CoreyStrategy)
 #   bot.stop
 class TradeBot
-  attr_reader :env
+  include Singleton
+
+  attr_reader :env, :websocket_machine, :processing_machine
 
   def initialize
     @env = {
       end_time: 1.day.from_now,
+      current_strategy: CoreyStrategy,
+      batch: Batch::CoreyBatch.new,
+      completed_batches: [],
+      current_price_data: nil,
+      running: false,
     }
-    @websocket_machine = Binance::Client::WebsocketMachine.new
+  end
+
+  def run
+    return if running?
+
     start_updating_price
+    start_processing_order
+
+    env[:running] = true
+
+    self
   end
 
   def stop
-    @websocket_machine.stop
+    env[:running] = false
+    processing_machine.exit
+    websocket_machine.stop
   end
 
   def start_updating_price
+    return if running?
+
     env[:start_time] = Time.now
 
-    @websocket_machine.run do |event|
+    websocket_machine = Binance::Client::WebsocketMachine.new
+    websocket_machine.run do |event|
       env[:current_price_data] = JSON event.data
 
-      @websocket_machine.stop if Time.now >= env[:end_time]
+      websocket_machine.stop if Time.now >= env[:end_time]
     end
 
-    self
+    websocket_machine
+  end
+
+  def start_processing_order
+    return if running?
+
+    processing_machine = Thread.new do
+      while running?
+        perform
+        sleep(0.2.seconds)
+      end
+    end
   end
 
   def current_price_data
     env[:current_price_data]
   end
 
-  def perform(strategy)
-    strategy.perform(current_price_data, self)
+  def current_strategy
+    env[:current_strategy]
+  end
+
+  def batch
+    env[:batch]
+  end
+
+  def completed_batches
+    env[:completed_batches]
+  end
+
+  def running?
+    env[:running]
+  end
+
+  def perform
+    return unless current_price_data.present?
+    current_strategy.new(current_price_data, self).perform
   end
 end
