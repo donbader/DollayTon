@@ -1,18 +1,15 @@
 class TempHistory
-  attr_reader :data, :tag
-  def initialize(tag = "history#{rand(100)}")
+  attr_reader :data, :tag, :data_max_size
+  def initialize(tag = "history#{rand(100)}", data_max_size: nil)
     @tag = tag
     @data = []
+    @data_max_size = data_max_size
   end
 
   # will insert into data in sorted way
   def insert(price)
-    if data.empty?
-      data << price
-    else
-      insert_at = data.bsearch_index { |x| x > price }
-      data.insert(insert_at || -1, price)
-    end
+    data << price
+    data.shift if data_max_size && (data.size > data_max_size)
   end
 
   # @return [Array] array of most frequent price
@@ -27,7 +24,7 @@ class TempHistory
   def inspect
     [
       "[#{self.class}] (:#{tag})",
-      "data: [#{min}..#{max}] (size: #{size})",
+      "data: [#{min}..#{max}] (size: #{size} / #{data_max_size})",
       "most_frequent: #{most_frequent}",
     ].join("  \n")
   end

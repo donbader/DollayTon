@@ -31,8 +31,8 @@ class TradeBot
 
   def stop
     env[:running] = false
-    processing_machine.exit
-    websocket_machine.stop
+    @processing_machine.exit
+    @websocket_machine.stop
   end
 
   def start_updating_price
@@ -40,20 +40,20 @@ class TradeBot
 
     env[:start_time] = Time.now
 
-    websocket_machine = Binance::Client::WebsocketMachine.new
-    websocket_machine.run do |event|
+    @websocket_machine = Binance::Client::WebsocketMachine.new
+    @websocket_machine.run do |event|
       env[:current_price_data] = JSON event.data
 
-      websocket_machine.stop if Time.now >= env[:end_time]
+      @websocket_machine.stop if Time.now >= env[:end_time]
     end
 
-    websocket_machine
+    @websocket_machine
   end
 
   def start_processing_order
     return if running?
 
-    processing_machine = Thread.new do
+    @processing_machine = Thread.new do
       while running?
         perform
         sleep(0.2.seconds)
@@ -84,5 +84,8 @@ class TradeBot
   def perform
     return unless current_price_data.present?
     current_strategy.new(current_price_data, self).perform
+  rescue => e
+    binding.pry
+    123
   end
 end

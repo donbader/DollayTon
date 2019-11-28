@@ -10,8 +10,8 @@ module Batch
     attr_reader :bid_history, :ask_history, :buy_limit, :sell_limit
 
     def initialize
-      @ask_history = TempHistory.new("ask_history")
-      @bid_history = TempHistory.new("bid_history")
+      @ask_history = TempHistory.new("ask_history", data_max_size: 100)
+      @bid_history = TempHistory.new("bid_history", data_max_size: 100)
       @buy_limit = nil
       @sell_limit = nil
     end
