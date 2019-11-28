@@ -24,16 +24,19 @@ ActiveRecord::Schema.define(version: 2019_11_27_000109) do
   create_table "orders", options: "ENGINE=InnoDB DEFAULT CHARSET=utf8", force: :cascade do |t|
     t.bigint "account_id"
     t.string "exchange"
+    t.string "pair_name"
     t.string "type"
+    t.boolean "direction", null: false
     t.decimal "quantity", precision: 16, scale: 2
     t.decimal "price", precision: 16, scale: 2
-    t.string "from_coin"
-    t.string "to_coin"
     t.string "status"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "parent_order_id"
     t.index ["account_id"], name: "index_orders_on_account_id"
+    t.index ["parent_order_id"], name: "index_orders_on_parent_order_id"
   end
 
   add_foreign_key "orders", "accounts"
+  add_foreign_key "orders", "orders", column: "parent_order_id"
 end

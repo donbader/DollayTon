@@ -37,6 +37,7 @@ gem 'jbuilder', '~> 2.5'
 gem 'bootsnap', '>= 1.1.0', require: false
 gem "awesome_print", require: "ap" # pretty printing
 gem "httparty"
+gem "aasm"
 
 # Clients
 gem 'cobinhood_api'
