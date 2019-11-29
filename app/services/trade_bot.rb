@@ -17,7 +17,7 @@ class TradeBot
       completed_batches: [],
       current_price_data: nil,
       running: false,
-      output: {},
+      debugging: {},
       error: nil
     }
   end
@@ -57,8 +57,7 @@ class TradeBot
 
     @processing_machine = Thread.new do
       while running?
-        result = perform
-        ap(result) if env[:output][:debugging]
+        perform
         sleep(0.2.seconds)
       end
     rescue StandardError => e
@@ -86,17 +85,22 @@ class TradeBot
     env[:running]
   end
 
-  def output!
-    env[:output][:debugging] = !env[:output][:debugging]
+  # debug toggling
+  def debug!(tag = :strategy)
+    env[:debugging][tag] = !env[:debugging][tag]
   end
 
-  def last_error
+  def debugging?(tag = :strategy)
+    env[:debugging][tag]
+  end
+
+  def error
     env[:error]
   end
 
   def perform
     return unless current_price_data.present?
 
-    current_strategy.new(current_price_data, self).perform
+    current_strategy.new(self).perform
   end
 end
