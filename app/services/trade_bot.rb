@@ -13,8 +13,6 @@ class TradeBot
     @env = {
       end_time: 1.day.from_now,
       current_strategy: CoreyStrategy,
-      batch: Batch::CoreyBatch.new,
-      completed_batches: [],
       current_price_data: nil,
       running: false,
       debugging: {},
@@ -71,14 +69,6 @@ class TradeBot
 
   def current_strategy
     env[:current_strategy]
-  end
-
-  def batch
-    env[:batch]
-  end
-
-  def completed_batches
-    env[:completed_batches]
   end
 
   def running?
