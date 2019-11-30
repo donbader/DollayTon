@@ -44,6 +44,8 @@ class TradeBot
     @websocket_machine.run do |event|
       env[:current_price_data] = JSON event.data
 
+      perform
+
       @websocket_machine.stop if Time.now >= env[:end_time]
     end
 
@@ -53,14 +55,15 @@ class TradeBot
   def start_processing_order
     return if running?
 
-    @processing_machine = Thread.new do
-      while running?
-        perform
-        sleep(0.2.seconds)
-      end
-    rescue StandardError => e
-      env[:error] = e
-    end
+    # @processing_machine = Thread.new do
+    #   # FIXME, put into price update
+    #   while running?
+    #     perform
+    #     sleep(0.1.seconds)
+    #   end
+    # rescue StandardError => e
+    #   env[:error] = e
+    # end
   end
 
   def current_price_data

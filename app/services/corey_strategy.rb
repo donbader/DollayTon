@@ -38,6 +38,9 @@ class CoreyStrategy
   end
 
   def place_order(buy:, sell:)
+    # not to place duplicated order
+    return if buy == shared.last_order[:buy] && sell == shared.last_order[:sell]
+
     time_elapased = Time.zone.now - shared.last_order[:created_at]
     shared.last_order = shared.current_order.dup
 
@@ -49,14 +52,39 @@ class CoreyStrategy
     }
   end
 
+  def good_price_to_buy
+    price = shared.bid_history.min.to_i
+    price if price == shared.ask_history.min.to_i
+  end
+
+  def good_price_to_sell
+    price = shared.bid_history.max.to_i
+    price if price == shared.ask_history.max.to_i
+  end
+
+  def should_place_order?(buy, sell)
+    return unless buy && sell
+    (sell - buy) > 3
+  end
+
   def perform
     shared.ask_history.insert(min_ask)
     shared.bid_history.insert(max_bid)
 
-    place_order(
-      buy: 10,
-      sell: 100,
-    )
+    buy = good_price_to_buy
+    sell = good_price_to_sell
+
+    if should_place_order?(buy, sell)
+      place_order(
+        buy: buy,
+        sell: sell,
+      )
+    else
+      place_order(
+        buy: nil,
+        sell: nil,
+      )
+    end
 
     report if trader.debugging?(:strategy)
   end
