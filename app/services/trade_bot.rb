@@ -5,6 +5,8 @@
 class TradeBot
   include Singleton
 
+  SETTINGS = YAML.load_file(Rails.root.join("setting.yml"))[Rails.env]
+
   attr_reader :env, :websocket_machine, :processing_machine
 
   def initialize
@@ -16,6 +18,8 @@ class TradeBot
       current_price_data: nil,
       running: false,
     }
+
+    @websocket_url = SETTINGS["websocket_url"]
   end
 
   def run
@@ -40,7 +44,7 @@ class TradeBot
 
     env[:start_time] = Time.now
 
-    @websocket_machine = Binance::Client::WebsocketMachine.new
+    @websocket_machine = Binance::Client::WebsocketMachine.new(@websocket_url)
     @websocket_machine.run do |event|
       env[:current_price_data] = JSON event.data
 

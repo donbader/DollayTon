@@ -1,0 +1,14 @@
+default: &default
+
+development: &development
+  "base_url": "https://testnet.binancefuture.com"
+  "websocket_url": "wss://stream.binancefuture.com"
+  <<: *default
+
+test:
+  <<: *development
+
+production:
+  "base_url": "https://fapi.binance.com"
+  "websocket_url": "wss://fstream.binance.com"
+  <<: *default
