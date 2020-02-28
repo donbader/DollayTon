@@ -1,10 +1,23 @@
+# frozen_string_literal: true
+
 class CoreyStrategy
-  COLLECTION_MAX_SIZE = 100
-
   attr_reader :current_price_data, :trader
+  attr_reader :ask_history, :bid_history
+  attr_reader :current_order, :last_order
 
-  def initialize(current_price_data, trader)
-    @current_price_data = current_price_data
+  def self.shared
+    @shared ||= OpenStruct.new(
+      ask_history: TempHistory.new('ask_history', data_max_size: 60),
+      bid_history: TempHistory.new('bid_history', data_max_size: 60),
+      current_order: { created_at: Time.zone.now },
+      last_order: { created_at: Time.zone.now }
+    )
+  end
+  delegate :shared, to: :class
+
+  def initialize(trader)
+    # Freeze the price data
+    @current_price_data = trader.current_price_data.dup
     @trader = trader
   end
 
@@ -12,87 +25,84 @@ class CoreyStrategy
     data[index].first.to_d
   end
 
-  def current_market_price
-    @current_market_price ||= (price_of(current_price_data['a']) + price_of(current_price_data['b'])) / 2
-  end
-
-  def current_batch
-    trader.env[:batch]
+  def estimated_market_price
+    (min_ask + max_bid) / 2
   end
 
   def min_ask
-    current_price_data['a'].first.first.to_d
+    price_of(current_price_data['a'], 0)
   end
 
   def max_bid
-    current_price_data['b'].first.first.to_d
+    price_of(current_price_data['b'], 0)
   end
 
-  def may_complete_order?(order)
-    return false unless order.waiting?
+  def place_order(buy:, sell:)
+    # not to place duplicated order
+    return if buy == shared.last_order[:buy] && sell == shared.last_order[:sell]
 
-    result =
-      if order.bid?
-        order.price > min_ask
-      else
-        order.price < max_bid
-      end
+    time_elapased = Time.zone.now - shared.last_order[:created_at]
+    shared.last_order = shared.current_order.dup
 
-    result = !result if order.is_a?(StopLossOrder)
-    result
+    shared.current_order = {
+      sell: sell,
+      buy: buy,
+      created_at: Time.zone.now,
+      time_elapased: time_elapased
+    }
+  end
+
+  def good_price_to_buy
+    price = shared.bid_history.min.to_i
+    price if price == shared.ask_history.min.to_i
+  end
+
+  def good_price_to_sell
+    price = shared.bid_history.max.to_i
+    price if price == shared.ask_history.max.to_i
+  end
+
+  def should_place_order?(buy, sell)
+    return unless buy && sell
+    (sell - buy) > 3
   end
 
   def perform
-    if current_batch.gathering_price_history?
-      current_batch.process(min_ask, max_bid)
-    elsif current_batch.processing?
-      report_price
-      # Update Orders status
-      [
-        current_batch.buy_limit,
-        current_batch.sell_limit,
-      ].each do |order|
-        if may_complete_order?(order)
-          puts "completing #{order.as_json}"
-          order.completed!
-        end
-      end
+    shared.ask_history.insert(min_ask)
+    shared.bid_history.insert(max_bid)
 
-      if current_batch.may_complete?
-        current_batch.complete
-      end
+    buy = good_price_to_buy
+    sell = good_price_to_sell
 
-      [
-        current_batch.buy_limit.stop_loss_order,
-        current_batch.sell_limit.stop_loss_order,
-      ].each do |order|
-        if may_complete_order?(order)
-          puts "completing #{order.as_json}"
-          order.completed!
-        end
-      end
-
-      if current_batch.may_complete?
-        current_batch.complete
-      end
-    elsif current_batch.completed?
-      trader.env[:completed_batches] << current_batch
-      trader.env[:batch] = current_batch.class.new
+    if should_place_order?(buy, sell)
+      place_order(
+        buy: buy,
+        sell: sell,
+      )
+    else
+      place_order(
+        buy: nil,
+        sell: nil,
+      )
     end
 
-    current_batch
-  rescue => e
-    binding.pry
+    report if trader.debugging?(:strategy)
   end
 
-  def report_price
-    ap({
-      "min_ask" => min_ask,
-      "max_bid" => max_bid,
-      sell_limit: current_batch.sell_limit.price,
-      buy_limit: current_batch.buy_limit.price,
-      sell_stop_loss: current_batch.sell_limit.stop_loss_order.price,
-      buy_stop_loss: current_batch.buy_limit.stop_loss_order.price,
-    }.sort_by(&:last).reverse)
+  def report
+    # Divider
+    puts '-' * 70
+
+    ap(shared.ask_history)
+    ap(shared.bid_history)
+
+    ap(
+      {
+        market_price: "[#{estimated_market_price}] --- #{max_bid} .. #{min_ask}",
+        current_order: shared.current_order,
+        last_order: shared.last_order
+      },
+      indent: -4, index: false, ruby19_syntax: true
+    )
   end
 end

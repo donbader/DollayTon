@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 # @example
-#   bot = TradeBot.new
-#   bot.perform(CoreyStrategy)
-#   bot.stop
+#   TradeBot.instance.run
+#   TradeBot.instance.output!
+#   TradeBot.instance.output!
 class TradeBot
   include Singleton
 
@@ -11,10 +13,10 @@ class TradeBot
     @env = {
       end_time: 1.day.from_now,
       current_strategy: CoreyStrategy,
-      batch: Batch::CoreyBatch.new,
-      completed_batches: [],
       current_price_data: nil,
       running: false,
+      debugging: {},
+      error: nil
     }
   end
 
@@ -25,14 +27,12 @@ class TradeBot
     start_processing_order
 
     env[:running] = true
-
-    self
   end
 
   def stop
     env[:running] = false
-    @processing_machine.exit
-    @websocket_machine.stop
+    @processing_machine&.exit
+    @websocket_machine&.stop
   end
 
   def start_updating_price
@@ -44,6 +44,8 @@ class TradeBot
     @websocket_machine.run do |event|
       env[:current_price_data] = JSON event.data
 
+      perform
+
       @websocket_machine.stop if Time.now >= env[:end_time]
     end
 
@@ -53,12 +55,15 @@ class TradeBot
   def start_processing_order
     return if running?
 
-    @processing_machine = Thread.new do
-      while running?
-        perform
-        sleep(0.2.seconds)
-      end
-    end
+    # @processing_machine = Thread.new do
+    #   # FIXME, put into price update
+    #   while running?
+    #     perform
+    #     sleep(0.1.seconds)
+    #   end
+    # rescue StandardError => e
+    #   env[:error] = e
+    # end
   end
 
   def current_price_data
@@ -69,23 +74,26 @@ class TradeBot
     env[:current_strategy]
   end
 
-  def batch
-    env[:batch]
-  end
-
-  def completed_batches
-    env[:completed_batches]
-  end
-
   def running?
     env[:running]
   end
 
+  # debug toggling
+  def debug!(tag = :strategy)
+    env[:debugging][tag] = !env[:debugging][tag]
+  end
+
+  def debugging?(tag = :strategy)
+    env[:debugging][tag]
+  end
+
+  def error
+    env[:error]
+  end
+
   def perform
     return unless current_price_data.present?
-    current_strategy.new(current_price_data, self).perform
-  rescue => e
-    binding.pry
-    123
+
+    current_strategy.new(self).perform
   end
 end
